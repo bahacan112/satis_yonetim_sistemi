@@ -51,14 +51,9 @@ export function BireyselRaporStatistics({
     isTotalCard = false
   ) => {
     if (metricType === "totalAmount" && userRole === "admin") {
-      return `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
+      return `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
     } else if (metricType === "paxAverage") {
-      // Eğer "Toplam" kartı içinse (yani toplam pax sayısı), tam sayı olarak formatla
-      if (isTotalCard) {
-        return value.toLocaleString();
-      }
-      // Aksi takdirde (ortalama değerler için), ondalıklı olarak formatla
-      return value.toFixed(2);
+      return value.toFixed(2); // Always format as decimal for average
     }
     return value.toLocaleString();
   };
@@ -70,7 +65,7 @@ export function BireyselRaporStatistics({
       case "totalAmount":
         return "Toplam Tutar";
       case "paxAverage":
-        return "Toplam Pax Sayısı"; // Changed label
+        return "Pax Ortalaması"; // Changed label
       default:
         return "Değer";
     }
@@ -83,7 +78,7 @@ export function BireyselRaporStatistics({
       case "totalAmount":
         return "Toplam Tutar";
       case "paxAverage":
-        return "Toplam Pax Sayısı"; // Pax Ortalaması seçildiğinde "Toplam" kartının başlığı
+        return "Ortalama Pax Ortalaması"; // Changed label for total card
       default:
         return "Toplam Değer";
     }
@@ -188,7 +183,6 @@ export function BireyselRaporStatistics({
               statistics.topPerformer.type as MetricType,
               true
             )}{" "}
-            {/* isTotalCard parametresi true olarak geçildi */}
           </div>
           <p className="text-xs text-muted-foreground">
             {statistics.totalItems} farklı öğe

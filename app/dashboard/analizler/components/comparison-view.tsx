@@ -21,13 +21,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { AnalysisData, AnalysisFilters } from "../page";
 import { Users, Store, Building2, Package } from "lucide-react";
 
 interface ComparisonViewProps {
-  data: AnalysisData[];
-  filters: AnalysisFilters;
-  onFiltersChange: (filters: Partial<AnalysisFilters>) => void;
+  data: any[];
+  filters: any;
+  onFiltersChange: (filters: any) => void;
   userRole: string | null;
   loading: boolean;
 }
@@ -58,6 +57,39 @@ export function ComparisonView({
     );
   }
 
+  // Get the correct metric value based on selected metric type
+  const getMetricValue = (item: any) => {
+    if (filters.metricType === "paxAverage") {
+      return item.paxAverage || 0;
+    } else if (filters.metricType === "totalAmount") {
+      return item.totalAmount || 0;
+    } else {
+      return item.totalSales || 0;
+    }
+  };
+
+  // Format the metric value for display
+  const formatMetricValue = (value: number) => {
+    if (filters.metricType === "paxAverage") {
+      return value.toFixed(2);
+    } else if (filters.metricType === "totalAmount") {
+      return `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
+    } else {
+      return value.toLocaleString();
+    }
+  };
+
+  // Get the metric label
+  const getMetricLabel = () => {
+    if (filters.metricType === "paxAverage") {
+      return "pax ort.";
+    } else if (filters.metricType === "totalAmount") {
+      return "toplam tutar";
+    } else {
+      return "satış";
+    }
+  };
+
   // Seçilen öğelerin zaman serisi verilerini birleştir
   const createTimeSeriesData = () => {
     if (selectedItems.length === 0) return [];
@@ -67,7 +99,7 @@ export function ComparisonView({
 
     // Tüm tarihleri topla
     selectedData.forEach((item) => {
-      item.data.forEach((d) => allDates.add(d.date));
+      item.data.forEach((d: any) => allDates.add(d.date));
     });
 
     // Tarihleri sırala
@@ -80,9 +112,17 @@ export function ComparisonView({
       };
 
       selectedData.forEach((item) => {
-        const dayData = item.data.find((d) => d.date === date);
-        dataPoint[item.name] =
-          userRole === "admin" ? dayData?.amount || 0 : dayData?.value || 0;
+        const dayData = item.data.find((d: any) => d.date === date);
+        if (filters.metricType === "paxAverage") {
+          // For pax average, calculate amount/pax for that day
+          const dayAmount = dayData?.amount || 0;
+          const dayPax = dayData?.pax || 0;
+          dataPoint[item.name] = dayPax > 0 ? dayAmount / dayPax : 0;
+        } else if (filters.metricType === "totalAmount") {
+          dataPoint[item.name] = dayData?.amount || 0;
+        } else {
+          dataPoint[item.name] = dayData?.value || 0;
+        }
       });
 
       return dataPoint;
@@ -109,11 +149,7 @@ export function ComparisonView({
 
   const selectTop5 = () => {
     const top5 = data
-      .sort((a, b) =>
-        userRole === "admin"
-          ? b.totalAmount - a.totalAmount
-          : b.totalSales - a.totalSales
-      )
+      .sort((a, b) => getMetricValue(b) - getMetricValue(a))
       .slice(0, 5)
       .map((item) => item.id);
     setSelectedItems(top5);
@@ -150,11 +186,7 @@ export function ComparisonView({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
             {data
-              .sort((a, b) =>
-                userRole === "admin"
-                  ? b.totalAmount - a.totalAmount
-                  : b.totalSales - a.totalSales
-              )
+              .sort((a, b) => getMetricValue(b) - getMetricValue(a))
               .map((item, index) => (
                 <div
                   key={item.id}
@@ -186,16 +218,8 @@ export function ComparisonView({
                       </label>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {item.totalSales.toLocaleString()} satış
-                      {userRole === "admin" && (
-                        <>
-                          {" "}
-                          • €
-                          {item.totalAmount.toLocaleString("tr-TR", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </>
-                      )}
+                      {formatMetricValue(getMetricValue(item))}{" "}
+                      {getMetricLabel()}
                     </div>
                   </div>
                 </div>
@@ -223,7 +247,13 @@ export function ComparisonView({
                   <Tooltip
                     formatter={(value, name) => [
                       typeof value === "number"
-                        ? value.toLocaleString("tr-TR")
+                        ? filters.metricType === "paxAverage"
+                          ? value.toFixed(2)
+                          : filters.metricType === "totalAmount"
+                          ? `₺${value.toLocaleString("tr-TR", {
+                              minimumFractionDigits: 2,
+                            })}`
+                          : value.toLocaleString("tr-TR")
                         : value,
                       name,
                     ]}
@@ -279,6 +309,7 @@ export function ComparisonView({
                         <th className="text-right p-2">Ortalama Tutar</th>
                       </>
                     )}
+                    <th className="text-right p-2">Pax Ortalaması</th>
                     <th className="text-right p-2">İşlem Sayısı</th>
                     <th className="text-center p-2">Performans</th>
                   </tr>
@@ -286,11 +317,7 @@ export function ComparisonView({
                 <tbody>
                   {data
                     .filter((item) => selectedItems.includes(item.id))
-                    .sort((a, b) =>
-                      userRole === "admin"
-                        ? b.totalAmount - a.totalAmount
-                        : b.totalSales - a.totalSales
-                    )
+                    .sort((a, b) => getMetricValue(b) - getMetricValue(a))
                     .map((item, index) => (
                       <tr key={item.id} className="border-b hover:bg-muted/50">
                         <td className="p-2">
@@ -305,25 +332,31 @@ export function ComparisonView({
                           </div>
                         </td>
                         <td className="text-right p-2 font-medium">
-                          {item.totalSales.toLocaleString()}
+                          {item.totalSales?.toLocaleString() || 0}
                         </td>
                         {userRole === "admin" && (
                           <>
                             <td className="text-right p-2 font-medium">
-                              €
-                              {item.totalAmount.toLocaleString("tr-TR", {
+                              ₺
+                              {(item.totalAmount || 0).toLocaleString("tr-TR", {
                                 minimumFractionDigits: 2,
                               })}
                             </td>
                             <td className="text-right p-2">
-                              €
-                              {item.averageAmount.toLocaleString("tr-TR", {
-                                minimumFractionDigits: 2,
-                              })}
+                              ₺
+                              {(item.averageAmount || 0).toLocaleString(
+                                "tr-TR",
+                                { minimumFractionDigits: 2 }
+                              )}
                             </td>
                           </>
                         )}
-                        <td className="text-right p-2">{item.salesCount}</td>
+                        <td className="text-right p-2 font-medium">
+                          {(item.paxAverage || 0).toFixed(2)}
+                        </td>
+                        <td className="text-right p-2">
+                          {item.salesCount || 0}
+                        </td>
                         <td className="text-center p-2">
                           <Badge
                             variant={

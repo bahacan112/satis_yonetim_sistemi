@@ -361,19 +361,9 @@ export default function BireyselRaporlarPage() {
         averageValue = data.length > 0 ? totalValue / data.length : 0;
         break;
       case "paxAverage":
-        sortedData = [...data].sort((a, b) => b.paxTotal - a.paxTotal);
-        const overallTotalAmount = data.reduce(
-          (sum, item) => sum + item.totalAmount,
-          0
-        );
-        const overallPaxTotal = data.reduce(
-          (sum, item) => sum + item.paxTotal,
-          0
-        );
-
-        totalValue = overallPaxTotal;
-        averageValue =
-          overallPaxTotal > 0 ? overallTotalAmount / overallPaxTotal : 0;
+        sortedData = [...data].sort((a, b) => b.paxAverage - a.paxAverage); // Sort by pax average
+        totalValue = data.reduce((sum, item) => sum + item.paxAverage, 0); // Sum of individual pax averages
+        averageValue = data.length > 0 ? totalValue / data.length : 0; // Average of individual pax averages
         break;
     }
 
@@ -563,9 +553,13 @@ export default function BireyselRaporlarPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Bireysel Raporlar</h1>
-          <p className="text-muted-foreground">
-            Detaylı bireysel raporlar ve performans analizleri
-          </p>
+          <CardDescription>
+            {filters.dateRange.start.toLocaleDateString()} -{" "}
+            {filters.dateRange.end.toLocaleDateString()} performans verileri (
+            {filters.metricType === "totalSales" && "Toplam Satış"}
+            {filters.metricType === "totalAmount" && "Toplam Tutar"}
+            {filters.metricType === "paxAverage" && "Pax Ortalaması"})
+          </CardDescription>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="flex items-center gap-1">
@@ -594,7 +588,7 @@ export default function BireyselRaporlarPage() {
           <Badge variant="outline" className="flex items-center gap-1">
             {filters.metricType === "totalSales" && "Toplam Satış"}
             {filters.metricType === "totalAmount" && "Toplam Tutar"}
-            {filters.metricType === "paxAverage" && "Toplam Pax Sayısı"}
+            {filters.metricType === "paxAverage" && "Pax Ortalaması"}
           </Badge>
           <Button onClick={handleDownloadPdf} disabled={loading}>
             <Download className="h-4 w-4 mr-2" />
@@ -686,7 +680,7 @@ export default function BireyselRaporlarPage() {
                             if (filters.metricType === "totalAmount")
                               return b.totalAmount - a.totalAmount;
                             if (filters.metricType === "paxAverage")
-                              return b.paxTotal - a.paxTotal;
+                              return b.paxAverage - a.paxAverage; // Sort by pax average
                             return 0;
                           })
                           .map((item, index) => (

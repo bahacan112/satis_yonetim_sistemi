@@ -90,7 +90,7 @@ export function BireyselRaporChart({
   const getSortValue = (item: BireyselRaporData, metricType: MetricType) => {
     if (metricType === "totalSales") return item.totalSales;
     if (metricType === "totalAmount") return item.totalAmount;
-    if (metricType === "paxAverage") return item.paxTotal; // Sort by total pax when paxAverage metric is selected
+    if (metricType === "paxAverage") return item.paxAverage; // Sort by pax average
     return 0;
   };
 
@@ -120,7 +120,7 @@ export function BireyselRaporChart({
         ? item.satisAdedi
         : filters.metricType === "totalAmount"
         ? item.toplamTutar
-        : item.toplamPaxSayisi, // Use toplamPaxSayisi for paxAverage metric type
+        : item.paxOrtalamasi, // Use paxOrtalamasi for paxAverage metric type
     fullName: item.fullName,
   }));
 
@@ -129,9 +129,9 @@ export function BireyselRaporChart({
       case "totalSales":
         return "Toplam Satış Adedi";
       case "totalAmount":
-        return "Toplam Tutar (€)";
+        return "Toplam Tutar (₺)";
       case "paxAverage":
-        return "Toplam Pax Sayısı"; // Changed label
+        return "Pax Ortalaması"; // Changed label
       default:
         return "Değer";
     }
@@ -144,7 +144,7 @@ export function BireyselRaporChart({
       case "totalAmount":
         return "toplamTutar";
       case "paxAverage":
-        return "toplamPaxSayisi"; // Use toplamPaxSayisi for paxAverage metric type
+        return "paxOrtalamasi"; // Use paxOrtalamasi for paxAverage metric type
       default:
         return "satisAdedi";
     }
@@ -158,11 +158,11 @@ export function BireyselRaporChart({
       if (typeof value === "number") {
         if (filters.metricType === "totalAmount") {
           return [
-            `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
+            `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
             mainMetricLabel,
           ];
         } else if (filters.metricType === "paxAverage") {
-          return [value.toLocaleString("tr-TR"), mainMetricLabel]; // Format as integer for total pax
+          return [value.toFixed(2), mainMetricLabel]; // Format as decimal for average
         }
         return [value.toLocaleString("tr-TR"), mainMetricLabel];
       }
@@ -190,13 +190,6 @@ export function BireyselRaporChart({
                 fill="#8884d8"
                 name={mainMetricLabel}
               />
-              {userRole === "admin" && filters.metricType !== "totalAmount" && (
-                <Bar
-                  dataKey="toplamTutar"
-                  fill="#82ca9d"
-                  name="Toplam Tutar (€)"
-                />
-              )}
             </BarChart>
           </ResponsiveContainer>
         );
@@ -217,15 +210,6 @@ export function BireyselRaporChart({
                 strokeWidth={2}
                 name={mainMetricLabel}
               />
-              {userRole === "admin" && filters.metricType !== "totalAmount" && (
-                <Line
-                  type="monotone"
-                  dataKey="toplamTutar"
-                  stroke="#82ca9d"
-                  strokeWidth={2}
-                  name="Toplam Tutar (€)"
-                />
-              )}
             </LineChart>
           </ResponsiveContainer>
         );
@@ -247,16 +231,6 @@ export function BireyselRaporChart({
                 fill="#8884d8"
                 name={mainMetricLabel}
               />
-              {userRole === "admin" && filters.metricType !== "totalAmount" && (
-                <Area
-                  type="monotone"
-                  dataKey="toplamTutar"
-                  stackId="2"
-                  stroke="#82ca9d"
-                  fill="#82ca9d"
-                  name="Toplam Tutar (€)"
-                />
-              )}
             </AreaChart>
           </ResponsiveContainer>
         );
@@ -290,11 +264,11 @@ export function BireyselRaporChart({
                 formatter={(value) => [
                   typeof value === "number"
                     ? filters.metricType === "totalAmount"
-                      ? `€${value.toLocaleString("tr-TR", {
+                      ? `₺${value.toLocaleString("tr-TR", {
                           minimumFractionDigits: 2,
                         })}`
                       : filters.metricType === "paxAverage"
-                      ? value.toLocaleString("tr-TR") // Format as integer for total pax
+                      ? value.toFixed(2) // Format as decimal for average
                       : value.toLocaleString("tr-TR")
                     : value,
                   mainMetricLabel,
@@ -322,13 +296,18 @@ export function BireyselRaporChart({
           {filters.analysisType === "tur" && "Tur"} Performans Raporu
         </CardTitle>
         <CardDescription>
-          {filters.timeRange === "haftalik" && "Son 7 günlük"}
-          {filters.timeRange === "15gun" && "Son 15 günlük"}
-          {filters.timeRange === "1ay" && "Son 1 aylık"}
-          {filters.timeRange === "3ay" && "Son 3 aylık"}
-          {filters.timeRange === "6ay" && "Son 6 aylık"}
-          {filters.timeRange === "senelik" && "Son 1 yıllık"} performans
-          verileri ({getMetricLabel(filters.metricType)})
+          {filters.dateRange?.from && filters.dateRange?.to ? (
+            <>
+              {filters.dateRange.from.toLocaleDateString("tr-TR")} -{" "}
+              {filters.dateRange.to.toLocaleDateString("tr-TR")} tarihleri arası
+              performans verileri ({getMetricLabel(filters.metricType)})
+            </>
+          ) : (
+            <>
+              Tüm zamanlar performans verileri (
+              {getMetricLabel(filters.metricType)})
+            </>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>{renderChart()}</CardContent>

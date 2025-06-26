@@ -263,7 +263,7 @@ export default function MuhasebePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{overallTotals.totalSales.toFixed(2)}
+              ₺{overallTotals.totalSales.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">Onaylanan satışlar</p>
           </CardContent>
@@ -277,7 +277,7 @@ export default function MuhasebePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{overallTotals.totalAcenteCommission.toFixed(2)}
+              ₺{overallTotals.totalAcenteCommission.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Onaylanan satışlardan acente payı
@@ -293,7 +293,7 @@ export default function MuhasebePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{overallTotals.totalOfficeCommission.toFixed(2)}
+              ₺{overallTotals.totalOfficeCommission.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Onaylanan satışlardan ofis payı
@@ -309,7 +309,7 @@ export default function MuhasebePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{overallTotals.totalCollection.toFixed(2)}
+              ₺{overallTotals.totalCollection.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Yapılan tüm tahsilatlar
@@ -325,7 +325,7 @@ export default function MuhasebePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              €{overallTotals.totalPendingSales.toFixed(2)}
+              ₺{overallTotals.totalPendingSales.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Onay bekleyen satışlar
@@ -363,16 +363,16 @@ export default function MuhasebePage() {
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Firma / Mağaza</TableHead>
-                <TableHead>Satış Tutarı</TableHead>
-                <TableHead>Acente Kom.</TableHead>
-                <TableHead>Ofis Kom.</TableHead>
-                <TableHead>Acente Tah.</TableHead>
-                <TableHead>Ofis Tah.</TableHead>
-                <TableHead>Kalan Acente Alacağı</TableHead>
-                <TableHead>Kalan Ofis Alacağı</TableHead>
-                <TableHead>Bekleyen Acente Hakediş</TableHead>
-                <TableHead>Bekleyen Ofis Hakediş</TableHead>
+                <TableHead>Onaylı Satış</TableHead>
+                <TableHead>Bekleme Satış</TableHead>
                 <TableHead>İptal Satış</TableHead>
+                <TableHead>Acente Hakediş</TableHead>
+                <TableHead>Bekleme Acente Hakediş</TableHead>
+                <TableHead>Acente Tahsilat</TableHead>
+                <TableHead>Ofis Hakediş</TableHead>
+                <TableHead>Ofis Tahsilat</TableHead>
+                <TableHead>Kalan Acente Hakedişi</TableHead>
+                <TableHead>Kalan Ofis Hakedişi</TableHead>
                 <TableHead>Durum</TableHead>
                 <TableHead className="text-right">İşlem</TableHead>
               </TableRow>
@@ -381,7 +381,7 @@ export default function MuhasebePage() {
               {filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={14}
+                    colSpan={13}
                     className="text-center text-muted-foreground"
                   >
                     Gösterilecek veri bulunamadı.
@@ -413,19 +413,29 @@ export default function MuhasebePage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        €{firma.total_toplam_satis_tutari.toFixed(2)}
+                        ₺{firma.total_toplam_satis_tutari.toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        €{firma.total_toplam_acente_komisyon_tutari.toFixed(2)}
+                        ₺{firma.total_bekleyen_satis_tutari.toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        €{firma.total_toplam_ofis_komisyon_tutari.toFixed(2)}
+                        ₺{firma.total_iptal_satis_tutari.toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        €{firma.total_toplam_acente_tahsilat.toFixed(2)}
+                        ₺{firma.total_toplam_acente_komisyon_tutari.toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        €{firma.total_toplam_ofis_tahsilat.toFixed(2)}
+                        ₺
+                        {firma.total_bekleyen_acente_komisyon_tutari.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        ₺{firma.total_toplam_acente_tahsilat.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        ₺{firma.total_toplam_ofis_komisyon_tutari.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        ₺{firma.total_toplam_ofis_tahsilat.toFixed(2)}
                       </TableCell>
                       <TableCell
                         className={cn(
@@ -435,7 +445,7 @@ export default function MuhasebePage() {
                           "font-semibold"
                         )}
                       >
-                        €{firma.total_kalan_acente_alacagi.toFixed(2)}
+                        ₺{firma.total_kalan_acente_alacagi.toFixed(2)}
                       </TableCell>
                       <TableCell
                         className={cn(
@@ -445,17 +455,7 @@ export default function MuhasebePage() {
                           "font-semibold"
                         )}
                       >
-                        €{firma.total_kalan_ofis_alacagi.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        €
-                        {firma.total_bekleyen_acente_komisyon_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        €{firma.total_bekleyen_ofis_komisyon_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        €{firma.total_iptal_satis_tutari.toFixed(2)}
+                        ₺{firma.total_kalan_ofis_alacagi.toFixed(2)}
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-center gap-1">
@@ -515,19 +515,28 @@ export default function MuhasebePage() {
                             {magaza.magaza_adi}
                           </TableCell>
                           <TableCell>
-                            €{magaza.toplam_satis_tutari.toFixed(2)}
+                            ₺{magaza.toplam_satis_tutari.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            €{magaza.toplam_acente_komisyon_tutari.toFixed(2)}
+                            ₺{magaza.bekleyen_satis_tutari.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            €{magaza.toplam_ofis_komisyon_tutari.toFixed(2)}
+                            ₺{magaza.iptal_satis_tutari.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            €{magaza.toplam_acente_tahsilat.toFixed(2)}
+                            ₺{magaza.toplam_acente_komisyon_tutari.toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            €{magaza.toplam_ofis_tahsilat.toFixed(2)}
+                            ₺{magaza.bekleyen_acente_komisyon_tutari.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            ₺{magaza.toplam_acente_tahsilat.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            ₺{magaza.toplam_ofis_komisyon_tutari.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            ₺{magaza.toplam_ofis_tahsilat.toFixed(2)}
                           </TableCell>
                           <TableCell
                             className={cn(
@@ -537,7 +546,7 @@ export default function MuhasebePage() {
                               "font-semibold"
                             )}
                           >
-                            €{magaza.kalan_acente_alacagi.toFixed(2)}
+                            ₺{magaza.kalan_acente_alacagi.toFixed(2)}
                           </TableCell>
                           <TableCell
                             className={cn(
@@ -547,16 +556,7 @@ export default function MuhasebePage() {
                               "font-semibold"
                             )}
                           >
-                            €{magaza.kalan_ofis_alacagi.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            €{magaza.bekleyen_acente_komisyon_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            €{magaza.bekleyen_ofis_komisyon_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            €{magaza.iptal_satis_tutari.toFixed(2)}
+                            ₺{magaza.kalan_ofis_alacagi.toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-center gap-1">

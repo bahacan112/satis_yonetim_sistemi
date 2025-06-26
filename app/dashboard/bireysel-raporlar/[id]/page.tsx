@@ -48,23 +48,18 @@ export type AnalysisType =
   | "urun"
   | "operator"
   | "tur";
-export type TimeRange =
-  | "haftalik"
-  | "15gun"
-  | "1ay"
-  | "3ay"
-  | "6ay"
-  | "senelik";
 export type ChartType = "bar" | "line" | "area" | "pie" | "donut";
+export type MetricType = "totalSales" | "totalAmount" | "paxAverage"; // Ensure MetricType is available here
 
 export interface DetailedReportFiltersType {
-  timeRange: TimeRange;
+  startDate: Date | null;
+  endDate: Date | null;
   selectedOperatorId: string | null;
   selectedProductId: string | null;
   selectedStoreId: string | null;
-  dailyChartType: ChartType; // Specific chart type for daily summary
-  productChartType: ChartType; // Specific chart type for product summary
-  storeChartType: ChartType; // Specific chart type for store summary
+  dailyChartType: ChartType;
+  productChartType: ChartType;
+  storeChartType: ChartType;
 }
 
 interface DetailedSalesItem {
@@ -120,7 +115,8 @@ interface DetailedReportProps {
     id: string;
   }>;
   searchParams: Promise<{
-    type: AnalysisType;
+    type?: AnalysisType;
+    metricType?: MetricType; // Add metricType to searchParams
   }>;
 }
 
@@ -141,8 +137,11 @@ export default function DetailedReportPage({
   params,
   searchParams,
 }: DetailedReportProps) {
+  // Route parameters now correctly unwrapped with use()
   const { id } = use(params);
-  const { type } = use(searchParams);
+  const { type: rawType, metricType: rawMetricType } = use(searchParams); // Get metricType from searchParams
+  const type = (rawType ?? "rehber") as AnalysisType;
+  const selectedMetricType = (rawMetricType ?? "totalAmount") as MetricType; // Default to totalAmount
 
   const { userRole } = useAuth();
 
@@ -158,41 +157,19 @@ export default function DetailedReportPage({
   const [storesOptions, setStoresOptions] = useState<OptionType[]>([]);
 
   const [filters, setFilters] = useState<DetailedReportFiltersType>({
-    timeRange: "1ay",
+    startDate: (() => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - 1); // Default to 1 month ago
+      return date;
+    })(),
+    endDate: new Date(), // Default to today
     selectedOperatorId: null,
     selectedProductId: null,
     selectedStoreId: null,
-    dailyChartType: "bar", // Default for daily summary
-    productChartType: "bar", // Default for product summary
-    storeChartType: "bar", // Default for store summary
+    dailyChartType: "bar",
+    productChartType: "bar",
+    storeChartType: "bar",
   });
-
-  const calculateDateRange = useCallback((timeRange: TimeRange) => {
-    const end = new Date();
-    const start = new Date();
-
-    switch (timeRange) {
-      case "haftalik":
-        start.setDate(end.getDate() - 7);
-        break;
-      case "15gun":
-        start.setDate(end.getDate() - 15);
-        break;
-      case "1ay":
-        start.setMonth(end.getMonth() - 1);
-        break;
-      case "3ay":
-        start.setMonth(end.getMonth() - 3);
-        break;
-      case "6ay":
-        start.setMonth(end.getMonth() - 6);
-        break;
-      case "senelik":
-        start.setFullYear(end.getFullYear() - 1);
-        break;
-    }
-    return { start, end };
-  }, []);
 
   const processSalesData = useCallback(
     (data: DetailedSalesItem[], role: string | null) => {
@@ -365,14 +342,19 @@ export default function DetailedReportPage({
           return;
       }
 
-      const dateRange = calculateDateRange(filters.timeRange);
+      // Require both start and end dates
+      if (!filters.startDate || !filters.endDate) {
+        console.warn("Both start and end dates are required");
+        setLoading(false);
+        return;
+      }
 
       let query = supabase
         .from("satislar_detay_view")
         .select("*")
         .eq(filterColumn, id)
-        .gte("satis_tarihi", dateRange.start.toISOString())
-        .lte("satis_tarihi", dateRange.end.toISOString());
+        .gte("satis_tarihi", filters.startDate.toISOString())
+        .lte("satis_tarihi", filters.endDate.toISOString());
 
       if (filters.selectedOperatorId) {
         query = query.eq("operator_id", filters.selectedOperatorId);
@@ -465,7 +447,7 @@ export default function DetailedReportPage({
     } finally {
       setLoading(false);
     }
-  }, [id, type, userRole, filters, calculateDateRange, processSalesData]);
+  }, [id, type, userRole, filters, processSalesData]);
 
   const getTitle = () => {
     switch (type) {
@@ -560,7 +542,12 @@ export default function DetailedReportPage({
     return sum + (Number.parseInt(sale.grup_pax?.toString() || "0") || 0);
   }, 0);
 
-  const renderChart = (data: any[], chartType: ChartType, dataKeyX: string) => {
+  const renderChart = (
+    data: any[],
+    chartType: ChartType,
+    dataKeyX: string,
+    selectedMetric: MetricType
+  ) => {
     if (!data || data.length === 0) {
       return (
         <div className="h-48 flex items-center justify-center text-muted-foreground">
@@ -574,14 +561,45 @@ export default function DetailedReportPage({
       height: 300,
     };
 
+    const getMetricDataKey = (metric: MetricType) => {
+      switch (metric) {
+        case "totalSales":
+          return "totalSales";
+        case "totalAmount":
+          return "totalAmount";
+        case "paxAverage":
+          return "paxAverage";
+        default:
+          return "totalAmount"; // Default
+      }
+    };
+
+    const getMetricLabel = (metric: MetricType) => {
+      switch (metric) {
+        case "totalSales":
+          return "Toplam Satış Adedi";
+        case "totalAmount":
+          return "Toplam Tutar";
+        case "paxAverage":
+          return "Pax Ortalaması";
+        default:
+          return "Değer";
+      }
+    };
+
+    const mainDataKey = getMetricDataKey(selectedMetric);
+    const mainMetricLabel = getMetricLabel(selectedMetric);
+
     const formatter = (value: any, name: string) => {
-      if (name === "Toplam Tutar")
+      if (selectedMetric === "totalAmount") {
         return [
-          `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
-          name,
+          `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
+          mainMetricLabel,
         ];
-      if (name === "Pax Ortalaması") return [`€${value.toFixed(2)}`, name];
-      return [value.toLocaleString("tr-TR"), name];
+      } else if (selectedMetric === "paxAverage") {
+        return [`${value.toFixed(2)}`, mainMetricLabel]; // Pax average is a number, not currency
+      }
+      return [value.toLocaleString("tr-TR"), mainMetricLabel];
     };
 
     switch (chartType) {
@@ -596,21 +614,13 @@ export default function DetailedReportPage({
                 textAnchor="end"
                 height={80}
               />
-              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+              <YAxis />
               <Tooltip formatter={formatter} />
               <Legend />
               <Bar
-                yAxisId="left"
-                dataKey="totalAmount"
+                dataKey={mainDataKey}
                 fill="#8884d8"
-                name="Toplam Tutar"
-              />
-              <Bar
-                yAxisId="right"
-                dataKey="paxTotal"
-                fill="#82ca9d"
-                name="Toplam Pax Sayısı"
+                name={mainMetricLabel}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -626,23 +636,14 @@ export default function DetailedReportPage({
                 textAnchor="end"
                 height={80}
               />
-              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+              <YAxis />
               <Tooltip formatter={formatter} />
               <Legend />
               <Line
-                yAxisId="left"
                 type="monotone"
-                dataKey="totalAmount"
+                dataKey={mainDataKey}
                 stroke="#8884d8"
-                name="Toplam Tutar"
-              />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="paxTotal"
-                stroke="#82ca9d"
-                name="Toplam Pax Sayısı"
+                name={mainMetricLabel}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -658,26 +659,15 @@ export default function DetailedReportPage({
                 textAnchor="end"
                 height={80}
               />
-              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+              <YAxis />
               <Tooltip formatter={formatter} />
               <Legend />
               <Area
-                yAxisId="left"
                 type="monotone"
-                dataKey="totalAmount"
+                dataKey={mainDataKey}
                 stroke="#8884d8"
                 fill="#8884d8"
-                name="Toplam Tutar"
-                fillOpacity={0.3}
-              />
-              <Area
-                yAxisId="right"
-                type="monotone"
-                dataKey="paxTotal"
-                stroke="#82ca9d"
-                fill="#82ca9d"
-                name="Toplam Pax Sayısı"
+                name={mainMetricLabel}
                 fillOpacity={0.3}
               />
             </AreaChart>
@@ -685,14 +675,15 @@ export default function DetailedReportPage({
         );
       case "pie":
       case "donut":
+        const pieChartData = data.map((item) => ({
+          name: item[dataKeyX],
+          value: item[mainDataKey], // Use the selected metric for value
+        }));
         return (
           <ResponsiveContainer {...chartProps}>
             <PieChart>
               <Pie
-                data={data.map((item) => ({
-                  name: item[dataKeyX],
-                  value: item.totalAmount,
-                }))}
+                data={pieChartData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -704,7 +695,7 @@ export default function DetailedReportPage({
                 fill="#8884d8"
                 dataKey="value"
               >
-                {data.map((entry, index) => (
+                {pieChartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -713,10 +704,14 @@ export default function DetailedReportPage({
               </Pie>
               <Tooltip
                 formatter={(value: any) => [
-                  `€${value.toLocaleString("tr-TR", {
-                    minimumFractionDigits: 2,
-                  })}`,
-                  "Toplam Tutar",
+                  selectedMetric === "totalAmount"
+                    ? `₺${value.toLocaleString("tr-TR", {
+                        minimumFractionDigits: 2,
+                      })}`
+                    : selectedMetric === "paxAverage"
+                    ? value.toFixed(2)
+                    : value.toLocaleString("tr-TR"),
+                  mainMetricLabel,
                 ]}
               />
               <Legend />
@@ -798,7 +793,12 @@ export default function DetailedReportPage({
                     <TabsTrigger value="donut">Halka Grafik</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                {renderChart(dailySummary, filters.dailyChartType, "date")}
+                {renderChart(
+                  dailySummary,
+                  filters.dailyChartType,
+                  "date",
+                  selectedMetricType
+                )}
               </CardContent>
             </Card>
 
@@ -830,7 +830,8 @@ export default function DetailedReportPage({
                 {renderChart(
                   productSummary,
                   filters.productChartType,
-                  "urun_adi"
+                  "urun_adi",
+                  selectedMetricType
                 )}
               </CardContent>
             </Card>
@@ -861,7 +862,8 @@ export default function DetailedReportPage({
                 {renderChart(
                   storeSummary,
                   filters.storeChartType,
-                  "magaza_adi"
+                  "magaza_adi",
+                  selectedMetricType
                 )}
               </CardContent>
             </Card>
@@ -889,17 +891,17 @@ export default function DetailedReportPage({
                         </TableHead>
                         {userRole === "admin" && (
                           <TableHead className="text-right">
-                            İptal Tutar (€)
+                            İptal Tutar (₺)
                           </TableHead>
                         )}
                         {userRole === "admin" && (
                           <TableHead className="text-right">
-                            Toplam Tutar (€)
+                            Toplam Tutar (₺)
                           </TableHead>
                         )}
                         {userRole === "admin" && (
                           <TableHead className="text-right">
-                            Pax Ortalaması (€)
+                            Pax Ortalaması (₺)
                           </TableHead>
                         )}
                       </TableRow>
@@ -924,7 +926,7 @@ export default function DetailedReportPage({
                           </TableCell>
                           {userRole === "admin" && (
                             <TableCell className="text-right">
-                              €
+                              ₺
                               {getAmountsByStatus(
                                 sale,
                                 userRole
@@ -935,7 +937,7 @@ export default function DetailedReportPage({
                           )}
                           {userRole === "admin" && (
                             <TableCell className="text-right">
-                              €
+                              ₺
                               {getAmountsByStatus(
                                 sale,
                                 userRole
@@ -946,7 +948,7 @@ export default function DetailedReportPage({
                           )}
                           {userRole === "admin" && (
                             <TableCell className="text-right">
-                              €
+                              ₺
                               {sale.magaza_pax > 0
                                 ? (
                                     Number.parseFloat(
@@ -969,7 +971,7 @@ export default function DetailedReportPage({
                         </TableCell>
                         {userRole === "admin" && (
                           <TableCell className="text-right">
-                            €
+                            ₺
                             {totalCancelledAmountSum.toLocaleString("tr-TR", {
                               minimumFractionDigits: 2,
                             })}
@@ -977,7 +979,7 @@ export default function DetailedReportPage({
                         )}
                         {userRole === "admin" && (
                           <TableCell className="text-right">
-                            €
+                            ₺
                             {totalApprovedAmountSum.toLocaleString("tr-TR", {
                               minimumFractionDigits: 2,
                             })}
@@ -985,7 +987,7 @@ export default function DetailedReportPage({
                         )}
                         {userRole === "admin" && (
                           <TableCell className="text-right">
-                            €
+                            ₺
                             {(totalPaxSum > 0
                               ? totalApprovedAmountSum / totalPaxSum
                               : 0
