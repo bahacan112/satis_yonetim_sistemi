@@ -32,12 +32,15 @@ import {
   MapPin,
   User,
   CalendarIcon,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { format, subMonths } from "date-fns";
+import { format, subYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   LineChart,
@@ -79,6 +82,9 @@ interface ChartData {
   commission: number;
 }
 
+type SortField = "date" | "store" | "tour" | "product" | "amount";
+type SortDirection = "asc" | "desc";
+
 const COLORS = [
   "#0088FE",
   "#00C49F",
@@ -103,26 +109,35 @@ export default function DashboardPage() {
   const [topStores, setTopStores] = useState<TopItem[]>([]);
   const [topFirms, setTopFirms] = useState<TopItem[]>([]);
 
-  // Satış grafiği için tarih aralığı
+  // Satış grafiği için tarih aralığı - Son 1 yıl varsayılan
   const [salesDateRange, setSalesDateRange] = useState<{
     from: Date;
     to: Date;
   }>({
-    from: subMonths(new Date(), 1),
+    from: subYears(new Date(), 1),
     to: new Date(),
   });
 
-  // Komisyon grafiği için tarih aralığı
+  // Komisyon grafiği için tarih aralığı - Son 1 yıl varsayılan
   const [commissionDateRange, setCommissionDateRange] = useState<{
     from: Date;
     to: Date;
   }>({
-    from: subMonths(new Date(), 1),
+    from: subYears(new Date(), 1),
     to: new Date(),
   });
 
   const [chartPeriod, setChartPeriod] = useState<"month" | "year">("month");
   const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  // Sıralama state'leri
+  const [pendingSortField, setPendingSortField] = useState<SortField>("date");
+  const [pendingSortDirection, setPendingSortDirection] =
+    useState<SortDirection>("asc"); // En eski tarih ilk sırada
+  const [cancelledSortField, setCancelledSortField] =
+    useState<SortField>("date");
+  const [cancelledSortDirection, setCancelledSortDirection] =
+    useState<SortDirection>("desc");
 
   // Diyalog kutuları için state'ler
   const [showPendingDialog, setShowPendingDialog] = useState(false);
@@ -157,7 +172,7 @@ export default function DashboardPage() {
       .from("satis_kalemleri_detay_view")
       .select("*")
       .eq("status", "beklemede")
-      .order("magaza_giris_tarihi", { ascending: false })
+      .order("magaza_giris_tarihi", { ascending: true }) // En eski tarih ilk sırada
       .limit(10);
 
     if (!error && data) {
@@ -254,7 +269,7 @@ export default function DashboardPage() {
   };
 
   const loadTopPerformers = async () => {
-    const startDate = format(subMonths(new Date(), 1), "yyyy-MM-dd");
+    const startDate = format(subYears(new Date(), 1), "yyyy-MM-dd");
     const endDate = format(new Date(), "yyyy-MM-dd");
 
     // En yüksek satışa sahip rehberler
@@ -384,6 +399,83 @@ export default function DashboardPage() {
     }
   };
 
+  // Sıralama fonksiyonları
+  const handlePendingSort = (field: SortField) => {
+    if (pendingSortField === field) {
+      setPendingSortDirection(pendingSortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setPendingSortField(field);
+      setPendingSortDirection("asc");
+    }
+  };
+
+  const handleCancelledSort = (field: SortField) => {
+    if (cancelledSortField === field) {
+      setCancelledSortDirection(
+        cancelledSortDirection === "asc" ? "desc" : "asc"
+      );
+    } else {
+      setCancelledSortField(field);
+      setCancelledSortDirection("asc");
+    }
+  };
+
+  const sortSales = (
+    sales: SalesItem[],
+    field: SortField,
+    direction: SortDirection
+  ) => {
+    return [...sales].sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (field) {
+        case "date":
+          aValue = new Date(a.magaza_giris_tarihi);
+          bValue = new Date(b.magaza_giris_tarihi);
+          break;
+        case "store":
+          aValue = a.magaza_adi;
+          bValue = b.magaza_adi;
+          break;
+        case "tour":
+          aValue = a.tur_adi;
+          bValue = b.tur_adi;
+          break;
+        case "product":
+          aValue = a.urun_adi;
+          bValue = b.urun_adi;
+          break;
+        case "amount":
+          aValue = a.adet * a.birim_fiyat;
+          bValue = b.adet * b.birim_fiyat;
+          break;
+        default:
+          return 0;
+      }
+
+      if (direction === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+  };
+
+  const getSortIcon = (
+    field: SortField,
+    currentField: SortField,
+    direction: SortDirection
+  ) => {
+    if (field !== currentField) {
+      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
+    }
+    return direction === "asc" ? (
+      <ArrowUp className="h-4 w-4 text-blue-600" />
+    ) : (
+      <ArrowDown className="h-4 w-4 text-blue-600" />
+    );
+  };
+
   if (loading || dashboardLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -439,6 +531,18 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  // Sıralanmış satış listelerini al
+  const sortedPendingSales = sortSales(
+    pendingSales,
+    pendingSortField,
+    pendingSortDirection
+  );
+  const sortedCancelledSales = sortSales(
+    cancelledSales,
+    cancelledSortField,
+    cancelledSortDirection
+  );
 
   // Admin ve standart kullanıcılar için yeni dashboard
   return (
@@ -730,13 +834,79 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {pendingSales.length === 0 ? (
+              {/* Sıralama başlıkları */}
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-100 rounded-lg font-medium text-sm">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handlePendingSort("date")}
+                      className="flex items-center gap-1 hover:text-blue-600 min-w-[80px]"
+                    >
+                      Tarih
+                      {getSortIcon(
+                        "date",
+                        pendingSortField,
+                        pendingSortDirection
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handlePendingSort("store")}
+                      className="flex items-center gap-1 hover:text-blue-600 min-w-[120px]"
+                    >
+                      Mağaza
+                      {getSortIcon(
+                        "store",
+                        pendingSortField,
+                        pendingSortDirection
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handlePendingSort("tour")}
+                      className="flex items-center gap-1 hover:text-blue-600 min-w-[80px]"
+                    >
+                      Tur
+                      {getSortIcon(
+                        "tour",
+                        pendingSortField,
+                        pendingSortDirection
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handlePendingSort("product")}
+                      className="flex items-center gap-1 hover:text-blue-600 flex-1"
+                    >
+                      Ürün
+                      {getSortIcon(
+                        "product",
+                        pendingSortField,
+                        pendingSortDirection
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePendingSort("amount")}
+                    className="flex items-center gap-1 hover:text-blue-600"
+                  >
+                    Tutar
+                    {getSortIcon(
+                      "amount",
+                      pendingSortField,
+                      pendingSortDirection
+                    )}
+                  </button>
+                  <span className="w-20 text-center">Durum</span>
+                </div>
+              </div>
+
+              {sortedPendingSales.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">
                   Bekleyen satış bulunmuyor
                 </p>
               ) : (
                 <div className="space-y-1">
-                  {pendingSales.map((sale, index) => (
+                  {sortedPendingSales.map((sale, index) => (
                     <div
                       key={
                         sale.id ||
@@ -805,13 +975,79 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {cancelledSales.length === 0 ? (
+              {/* Sıralama başlıkları */}
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-100 rounded-lg font-medium text-sm">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleCancelledSort("date")}
+                      className="flex items-center gap-1 hover:text-blue-600 min-w-[80px]"
+                    >
+                      Tarih
+                      {getSortIcon(
+                        "date",
+                        cancelledSortField,
+                        cancelledSortDirection
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleCancelledSort("store")}
+                      className="flex items-center gap-1 hover:text-blue-600 min-w-[120px]"
+                    >
+                      Mağaza
+                      {getSortIcon(
+                        "store",
+                        cancelledSortField,
+                        cancelledSortDirection
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleCancelledSort("tour")}
+                      className="flex items-center gap-1 hover:text-blue-600 min-w-[80px]"
+                    >
+                      Tur
+                      {getSortIcon(
+                        "tour",
+                        cancelledSortField,
+                        cancelledSortDirection
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleCancelledSort("product")}
+                      className="flex items-center gap-1 hover:text-blue-600 flex-1"
+                    >
+                      Ürün
+                      {getSortIcon(
+                        "product",
+                        cancelledSortField,
+                        cancelledSortDirection
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleCancelledSort("amount")}
+                    className="flex items-center gap-1 hover:text-blue-600"
+                  >
+                    Tutar
+                    {getSortIcon(
+                      "amount",
+                      cancelledSortField,
+                      cancelledSortDirection
+                    )}
+                  </button>
+                  <span className="w-20 text-center">Durum</span>
+                </div>
+              </div>
+
+              {sortedCancelledSales.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">
                   İptal edilen satış bulunmuyor
                 </p>
               ) : (
                 <div className="space-y-1">
-                  {cancelledSales.map((sale, index) => (
+                  {sortedCancelledSales.map((sale, index) => (
                     <div
                       key={
                         sale.id ||
@@ -868,7 +1104,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="h-5 w-5 text-gold-600" />
-              En İyi Rehberler (Son Ay)
+              En İyi Rehberler (Son Yıl)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -914,7 +1150,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-blue-600" />
-              En İyi Turlar (Son Ay)
+              En İyi Turlar (Son Yıl)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -960,7 +1196,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Store className="h-5 w-5 text-green-600" />
-              En İyi Mağazalar (Son Ay)
+              En İyi Mağazalar (Son Yıl)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -1006,7 +1242,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-purple-600" />
-              En İyi Firmalar (Son Ay)
+              En İyi Firmalar (Son Yıl)
             </CardTitle>
           </CardHeader>
           <CardContent>

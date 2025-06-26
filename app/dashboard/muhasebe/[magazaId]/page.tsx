@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Edit, Trash2, ArrowLeft, CalendarIcon } from "lucide-react";
+import { Edit, Trash2, ArrowLeft, CalendarIcon, Download } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -262,46 +262,46 @@ export default function MagazaDetayPage() {
           .from("magaza_satis_kalemleri")
           .select(
             `
-            satis_id,
-            urun_id,
-            adet,
-            birim_fiyat,
-            acente_komisyonu,
-            rehber_komisyonu,
-            kaptan_komisyonu,
-            ofis_komisyonu,
-            status,
-            satislar!inner (
-              id,
-              magaza_giris_tarihi,
-              grup_gelis_tarihi,
-              grup_pax,
-              magaza_pax,
-              magaza_id,
-              rehber_id,
-              tur_id,
-              operator_id,
-              magazalar!inner (
-                id,
-                magaza_adi,
-                firmalar (
-                  firma_adi
-                )
-              ),
-              rehberler (
-                rehber_adi
-              ),
-              turlar (
-                tur_adi,
-                operatorler (
-                  operator_adi
-                )
-              )
-            ),
-            urunler (
-              urun_adi
-            )
-          `
+           satis_id,
+           urun_id,
+           adet,
+           birim_fiyat,
+           acente_komisyonu,
+           rehber_komisyonu,
+           kaptan_komisyonu,
+           ofis_komisyonu,
+           status,
+           satislar!inner (
+             id,
+             magaza_giris_tarihi,
+             grup_gelis_tarihi,
+             grup_pax,
+             magaza_pax,
+             magaza_id,
+             rehber_id,
+             tur_id,
+             operator_id,
+             magazalar!inner (
+               id,
+               magaza_adi,
+               firmalar (
+                 firma_adi
+               )
+             ),
+             rehberler (
+               rehber_adi
+             ),
+             turlar (
+               tur_adi,
+               operatorler (
+                 operator_adi
+               )
+             )
+           ),
+           urunler (
+             urun_adi
+           )
+         `
           )
           .eq("satislar.magaza_id", id)
           .eq("status", status);
@@ -560,6 +560,142 @@ export default function MagazaDetayPage() {
     }
   };
 
+  // CSV Export Function
+  const exportToCSV = () => {
+    try {
+      const currentData = combinedDetails;
+      if (currentData.length === 0) {
+        setDetailMessage("Dışa aktarılacak veri bulunamadı!");
+        setTimeout(() => setDetailMessage(""), 3000);
+        return;
+      }
+
+      // CSV Headers
+      const headers = [
+        "Tarih",
+        "Tip",
+        "Operatör/Kanal",
+        "Grup Pax",
+        "Mağaza Pax",
+        "Rehber",
+        ...allProductNames,
+        "Toplam Satış",
+        "Pax Satış Ort.",
+        "Acente Kom.",
+        "Ofis Kom.",
+      ];
+
+      // CSV Rows
+      const rows = currentData.map((item) => {
+        const row = [
+          item.displayDate,
+          item.type === "sale" ? "Satış" : "Tahsilat",
+          item.type === "sale"
+            ? (item as ProcessedSaleRow).operator_adi || "-"
+            : (item as TahsilatDetay).odeme_kanali,
+          item.type === "sale"
+            ? String((item as ProcessedSaleRow).grup_pax || "-")
+            : "-",
+          item.type === "sale"
+            ? String((item as ProcessedSaleRow).magaza_pax || "-")
+            : "-",
+          item.type === "sale"
+            ? (item as ProcessedSaleRow).rehber_adi || "-"
+            : "-",
+        ];
+
+        // Product columns
+        allProductNames.forEach((productName) => {
+          if (item.type === "sale") {
+            const saleItem = item as ProcessedSaleRow;
+            row.push(
+              String(toNumber(saleItem.productSales?.[productName]).toFixed(2))
+            );
+          } else {
+            row.push("-");
+          }
+        });
+
+        // Final columns
+        row.push(
+          item.type === "sale"
+            ? String(
+                toNumber(
+                  (item as ProcessedSaleRow).toplam_satis_tutari
+                ).toFixed(2)
+              )
+            : "-",
+          item.type === "sale"
+            ? String(
+                toNumber((item as ProcessedSaleRow).pax_satis_ort).toFixed(2)
+              )
+            : "-",
+          item.type === "sale"
+            ? String(
+                toNumber(
+                  (item as ProcessedSaleRow).acente_komisyon_tutari
+                ).toFixed(2)
+              )
+            : String(toNumber((item as TahsilatDetay).acente_payi).toFixed(2)),
+          item.type === "sale"
+            ? String(
+                toNumber(
+                  (item as ProcessedSaleRow).ofis_komisyon_tutari
+                ).toFixed(2)
+              )
+            : String(toNumber((item as TahsilatDetay).ofis_payi).toFixed(2))
+        );
+
+        return row;
+      });
+
+      // Create CSV content
+      const csvContent = [headers, ...rows]
+        .map((row) =>
+          row
+            .map((cell) => {
+              // Escape quotes and wrap in quotes if contains comma, quote, or newline
+              const cellStr = String(cell || "");
+              if (
+                cellStr.includes(",") ||
+                cellStr.includes('"') ||
+                cellStr.includes("\n")
+              ) {
+                return `"${cellStr.replace(/"/g, '""')}"`;
+              }
+              return cellStr;
+            })
+            .join(",")
+        )
+        .join("\n");
+
+      // Add UTF-8 BOM for Turkish character support
+      const BOM = "\uFEFF";
+      const csvWithBOM = BOM + csvContent;
+
+      // Create and download file
+      const blob = new Blob([csvWithBOM], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `${magazaAdi}_${selectedTab}_${format(new Date(), "yyyy-MM-dd")}.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setDetailMessage("CSV dosyası başarıyla indirildi!");
+      setTimeout(() => setDetailMessage(""), 3000);
+    } catch (error: any) {
+      console.error("CSV export error:", error);
+      setDetailMessage(`CSV dışa aktarma hatası: ${error.message}`);
+      setTimeout(() => setDetailMessage(""), 3000);
+    }
+  };
+
   const calculateTotals = (data: CombinedDetailRow[]) => {
     const totalSalesAmount = data.reduce(
       (sum, item) =>
@@ -695,23 +831,32 @@ export default function MagazaDetayPage() {
             </p>
           </div>
         </div>
-        {selectedTab === "onaylandı" && (
+        <div className="flex space-x-2">
           <Button
-            onClick={() => {
-              setEditingTahsilat({
-                id: undefined,
-                magaza_id: magazaId,
-                tahsilat_tarihi: format(new Date(), "yyyy-MM-dd"),
-                odeme_kanali: "",
-                acente_payi: "0",
-                ofis_payi: "0",
-              });
-              setIsTahsilatFormOpen(true);
-            }}
+            onClick={exportToCSV}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
-            Yeni Tahsilat Ekle
+            <Download className="w-4 h-4 mr-2" />
+            CSV Dışa Aktar
           </Button>
-        )}
+          {selectedTab === "onaylandı" && (
+            <Button
+              onClick={() => {
+                setEditingTahsilat({
+                  id: undefined,
+                  magaza_id: magazaId,
+                  tahsilat_tarihi: format(new Date(), "yyyy-MM-dd"),
+                  odeme_kanali: "",
+                  acente_payi: "0",
+                  ofis_payi: "0",
+                });
+                setIsTahsilatFormOpen(true);
+              }}
+            >
+              Yeni Tahsilat Ekle
+            </Button>
+          )}
+        </div>
       </div>
 
       {detailMessage && (
