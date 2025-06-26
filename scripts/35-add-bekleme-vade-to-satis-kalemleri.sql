@@ -1,0 +1,7 @@
+ALTER TABLE public.magaza_satis_kalemleri
+ADD COLUMN IF NOT EXISTS bekleme BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS vade_tarihi DATE;
+
+ALTER TABLE public.rehber_satis_kalemleri
+ADD COLUMN IF NOT EXISTS bekleme BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS vade_tarihi DATE;
