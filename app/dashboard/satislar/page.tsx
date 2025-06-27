@@ -33,10 +33,10 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Trash2,
   Plus,
-  Minus,
   Calendar,
   BarChart,
   Edit,
@@ -50,26 +50,15 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
 
-// Yeni eklenen diyalog bileşenleri
+// Import dialog components
 import { AddUrunDialog } from "@/components/dialogs/add-urun-dialog";
 import { AddMagazaDialog } from "@/components/dialogs/add-magaza-dialog";
 import { AddOperatorDialog } from "@/components/dialogs/add-operator-dialog";
 import { AddTurDialog } from "@/components/dialogs/add-tur-dialog";
 import { AddFirmaDialog } from "@/components/dialogs/add-firma-dialog";
 import { AddRehberDialog } from "@/components/dialogs/add-rehber-dialog";
-import { toast } from "@/components/ui/use-toast";
 
 // satislar_detay_view'den gelen veriye uygun arayüz
 interface SatisDetayViewRow {
@@ -238,8 +227,54 @@ const defaultFormDataState: SatisFormState = {
   magaza_id: "",
 };
 
+// Admin bildirim sistemi için yeni fonksiyon
+const sendAdminNotification = async (
+  action: string,
+  userEmail: string,
+  details: any
+) => {
+  try {
+    // Admin kullanıcıları bul
+    const { data: adminUsers, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin");
+
+    if (error) {
+      console.error("Admin kullanıcıları bulunamadı:", error);
+      return;
+    }
+
+    // Her admin için bildirim oluştur
+    const notifications = adminUsers?.map((admin) => ({
+      user_id: admin.id,
+      title: `Satış ${action}`,
+      message: `${userEmail} tarafından satış ${action} işlemi yapıldı. Detaylar: ${JSON.stringify(
+        details
+      )}`,
+      type: "sales_update",
+      read: false,
+      created_at: new Date().toISOString(),
+    }));
+
+    if (notifications && notifications.length > 0) {
+      const { error: notificationError } = await supabase
+        .from("notifications")
+        .insert(notifications);
+
+      if (notificationError) {
+        console.error("Bildirim gönderme hatası:", notificationError);
+      } else {
+        console.log("Admin bildirimleri başarıyla gönderildi");
+      }
+    }
+  } catch (error) {
+    console.error("Bildirim sistemi hatası:", error);
+  }
+};
+
 export default function SatislarPage() {
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   const [satislar, setSatislar] = useState<SatisDetayViewRow[]>([]); // SatisDetayViewRow tipini kullan
   const [filteredSatislar, setFilteredSatislar] = useState<SatisDetayViewRow[]>(
     []
@@ -420,18 +455,18 @@ export default function SatislarPage() {
         .from("satislar")
         .select(
           `
-      id,
-      operator_id,
-      firma_id,
-      grup_gelis_tarihi,
-      magaza_giris_tarihi,
-      grup_pax,
-      magaza_pax,
-      tur_id,
-      rehber_id,
-      magaza_id,
-      created_at
-    `
+     id,
+     operator_id,
+     firma_id,
+     grup_gelis_tarihi,
+     magaza_giris_tarihi,
+     grup_pax,
+     magaza_pax,
+     tur_id,
+     rehber_id,
+     magaza_id,
+     created_at
+   `
         )
         .order("magaza_giris_tarihi", { ascending: false })
         .order("id", { ascending: false });
@@ -447,17 +482,17 @@ export default function SatislarPage() {
           .from("magaza_satis_kalemleri")
           .select(
             `
-        urun_id,
-        adet,
-        birim_fiyat,
-        acente_komisyonu,
-        rehber_komisyonu,
-        kaptan_komisyonu,
-        ofis_komisyonu,
-        status,
-        satis_aciklamasi,
-        urunler (urun_adi)
-      `
+       urun_id,
+       adet,
+       birim_fiyat,
+       acente_komisyonu,
+       rehber_komisyonu,
+       kaptan_komisyonu,
+       ofis_komisyonu,
+       status,
+       satis_aciklamasi,
+       urunler (urun_adi)
+     `
           )
           .eq("satis_id", satis.id);
 
@@ -468,13 +503,13 @@ export default function SatislarPage() {
           .from("rehber_satis_kalemleri")
           .select(
             `
-        urun_id,
-        adet,
-        birim_fiyat,
-        status,
-        satis_aciklamasi,
-        urunler (urun_adi)
-      `
+       urun_id,
+       adet,
+       birim_fiyat,
+       status,
+       satis_aciklamasi,
+       urunler (urun_adi)
+     `
           )
           .eq("satis_id", satis.id);
 
@@ -900,6 +935,7 @@ urun_adi
 
     try {
       let currentSatisId: string | null = null;
+      const isUpdate = !!formData.satis_id;
 
       if (formData.satis_id) {
         // Mevcut satışı düzenleme
@@ -1029,6 +1065,26 @@ urun_adi
         }
       }
 
+      // Admin bildirim sistemi - sadece rehber ve standart kullanıcılar için
+      if (userRole === "rehber" || userRole === "standart") {
+        const actionType = isUpdate ? "güncellendi" : "eklendi";
+        const notificationDetails = {
+          satisId: currentSatisId,
+          firma: firmalar.find((f) => f.id === formData.firma_id)?.firma_adi,
+          magaza: magazalar.find((m) => m.id === formData.magaza_id)
+            ?.magaza_adi,
+          urunSayisi: validUrunler.length,
+          bildirimTipi: validUrunler[0]?.bildirim_tipi,
+          tarih: formData.satis_tarihi,
+        };
+
+        await sendAdminNotification(
+          actionType,
+          user?.email || "Bilinmeyen kullanıcı",
+          notificationDetails
+        );
+      }
+
       toast({
         title: "Başarılı!",
         description: `Satış başarıyla ${
@@ -1092,6 +1148,15 @@ urun_adi
       // Sonra ana satışı sil
       const { error } = await supabase.from("satislar").delete().eq("id", id);
       if (error) throw error;
+
+      // Admin bildirim sistemi - sadece rehber ve standart kullanıcılar için
+      if (userRole === "rehber" || userRole === "standart") {
+        await sendAdminNotification(
+          "silindi",
+          user?.email || "Bilinmeyen kullanıcı",
+          { satisId: id }
+        );
+      }
 
       toast({
         title: "Başarılı!",
@@ -1724,7 +1789,9 @@ urun_adi
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         <span className="font-semibold">
-                          {new Date(group.date).toLocaleDateString("tr-TR")}
+                          {group.date
+                            ? new Date(group.date).toLocaleDateString("tr-TR")
+                            : "-"}
                         </span>
                         <Badge variant="outline">{group.tur}</Badge>
                         {/* Durum rozeti artık sadece adminler için görünür */}
@@ -1743,14 +1810,14 @@ urun_adi
                     {userRole === "admin" && (
                       <div className="text-right space-y-1">
                         <div className="text-lg font-bold text-green-600">
-                          €{group.magaza_toplam.toFixed(2)}
+                          ₺{group.magaza_toplam.toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-500">
                           Mağaza Toplam Tutar
                         </div>
                         {group.magaza_toplam > 0 || group.rehber_toplam > 0 ? ( // Sadece biri bile varsa göster
                           <div className="text-xs text-gray-400">
-                            M: €{group.magaza_toplam.toFixed(2)} | R: €
+                            M: ₺{group.magaza_toplam.toFixed(2)} | R: ₺
                             {group.rehber_toplam.toFixed(2)}
                           </div>
                         ) : null}
@@ -1798,16 +1865,16 @@ urun_adi
                           )}
                           <TableCell>{satis.adet || 0}</TableCell>
                           {userRole === "admin" && (
-                            <TableCell>€{satis.birim_fiyat || 0}</TableCell>
+                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
                           )}
                           {userRole === "standart" && (
-                            <TableCell>€{satis.birim_fiyat || 0}</TableCell>
+                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
                           )}
                           {userRole === "admin" && (
-                            <TableCell>€{satis.toplam_tutar || 0}</TableCell>
+                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
                           )}
                           {userRole === "standart" && (
-                            <TableCell>€{satis.toplam_tutar || 0}</TableCell>
+                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
                           )}
                           <TableCell>
                             {satis.status === "onaylandı" && (
@@ -1836,38 +1903,34 @@ urun_adi
                                 size="sm"
                                 onClick={() => handleEdit(satis)}
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-4 h-4 mr-2" />
+                                Düzenle
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDelete(satis.satis_id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Sil
                               </Button>
                               {userRole === "admin" && (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => showOranlar(satis)}
-                                  >
-                                    <BarChart className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDelete(satis.satis_id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => showOranlar(satis)}
+                                >
+                                  <BarChart className="w-4 h-4 mr-2" />
+                                  Oranlar
+                                </Button>
                               )}
                             </div>
                           </TableCell>
                         </TableRow>
                       ))}
-
                       {/* Rehber Satışları */}
                       {group.rehber_satislari.map((satis, itemIndex) => (
-                        <TableRow
-                          key={`rehber-${satis.satis_id}-${itemIndex}`}
-                          className="bg-orange-50"
-                        >
+                        <TableRow key={`rehber-${satis.satis_id}-${itemIndex}`}>
                           <TableCell className="font-medium">
                             {satis.urun_adi || "-"}
                           </TableCell>
@@ -1884,13 +1947,17 @@ urun_adi
                             </TableCell>
                           )}
                           <TableCell>{satis.adet || 0}</TableCell>
-                          {(userRole === "admin" ||
-                            userRole === "standart") && (
-                            <TableCell>€{satis.birim_fiyat || 0}</TableCell>
+                          {userRole === "admin" && (
+                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
                           )}
-                          {(userRole === "admin" ||
-                            userRole === "standart") && (
-                            <TableCell>€{satis.toplam_tutar || 0}</TableCell>
+                          {userRole === "standart" && (
+                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                          )}
+                          {userRole === "admin" && (
+                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                          )}
+                          {userRole === "standart" && (
+                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
                           )}
                           <TableCell>
                             {satis.status === "onaylandı" && (
@@ -1919,17 +1986,25 @@ urun_adi
                                 size="sm"
                                 onClick={() => handleEdit(satis)}
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-4 h-4 mr-2" />
+                                Düzenle
                               </Button>
-                              {/* Rehber satışları için komisyon oranları gösterilmez, sadece mağaza satışları için */}
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDelete(satis.satis_id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Sil
+                              </Button>
                               {userRole === "admin" && (
                                 <Button
-                                  variant="outline"
+                                  variant="secondary"
                                   size="sm"
-                                  onClick={() => handleDelete(satis.satis_id)}
-                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => showOranlar(satis)}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <BarChart className="w-4 h-4 mr-2" />
+                                  Oranlar
                                 </Button>
                               )}
                             </div>
@@ -1945,363 +2020,419 @@ urun_adi
         </CardContent>
       </Card>
 
-      {/* Satış Ekleme/Düzenleme Diyalogu */}
+      {/* Oranlar Dialog */}
+      <Dialog open={isOranlarDialogOpen} onOpenChange={setIsOranlarDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Komisyon Oranları</DialogTitle>
+            <DialogDescription>
+              Seçili satış kaleminin komisyon oranlarını görüntüleyin.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSatis && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <Label>Acente Komisyonu</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.acente_komisyonu || "0"}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>Rehber Komisyonu</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.rehber_komisyonu || "0"}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>Kaptan Komisyonu</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.kaptan_komisyonu || "0"}
+                    disabled
+                  />
+                </div>
+                {/* Yeni eklendi */}
+                <div>
+                  <Label>Ofis Komisyonu</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.ofis_komisyonu || "0"}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>Acente Komisyon Tutarı</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.acente_komisyon_tutari || "0"}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>Rehber Komisyon Tutarı</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.rehber_komisyon_tutari || "0"}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>Kaptan Komisyon Tutarı</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.kaptan_komisyon_tutari || "0"}
+                    disabled
+                  />
+                </div>
+                {/* Yeni eklendi */}
+                <div>
+                  <Label>Ofis Komisyon Tutarı</Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.ofis_komisyon_tutari || "0"}
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Satış Ekleme/Düzenleme Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={handleMainDialogClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {editingSatis ? "Satış Düzenle" : "Yeni Satış Ekle"}
             </DialogTitle>
             <DialogDescription>
-              {editingSatis
-                ? "Mevcut satış bilgilerini düzenleyin"
-                : "Yeni satış kaydı oluşturun"}
+              Bu formu kullanarak mağaza satışlarını ekleyebilir veya
+              düzenleyebilirsiniz.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Firma */}
-              <div>
-                <Label htmlFor="firma_id">Firma</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.firma_id}
-                    onValueChange={(value) =>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="operator_id">Operatör</Label>
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      id="operator_id"
+                      value={formData.operator_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, operator_id: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Operatör Seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {operatorler.map((operator) => (
+                          <SelectItem key={operator.id} value={operator.id}>
+                            {operator.operator_adi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddOperatorDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="firma_id">Firma</Label>
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      id="firma_id"
+                      value={formData.firma_id}
+                      onValueChange={(value) => {
+                        setFormData({
+                          ...formData,
+                          firma_id: value,
+                          magaza_id: "",
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Firma Seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {firmalar.map((firma) => (
+                          <SelectItem key={firma.id} value={firma.id}>
+                            {firma.firma_adi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddFirmaDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="magaza_id">Mağaza</Label>
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      id="magaza_id"
+                      value={formData.magaza_id}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, magaza_id: value });
+                      }}
+                      disabled={!formData.firma_id}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Mağaza Seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {magazalar.map((magaza) => (
+                          <SelectItem key={magaza.id} value={magaza.id}>
+                            {magaza.magaza_adi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddMagazaDialogOpen(true)}
+                      disabled={!formData.firma_id}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="grup_gelis_tarihi">Grup Geliş Tarihi</Label>
+                  <Input
+                    type="date"
+                    id="grup_gelis_tarihi"
+                    value={formData.grup_gelis_tarihi}
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
-                        firma_id: value,
-                        magaza_id: "",
+                        grup_gelis_tarihi: e.target.value,
                       })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Firma seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {firmalar.map((firma) => (
-                        <SelectItem key={firma.id} value={firma.id}>
-                          {firma.firma_adi}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddFirmaDialogOpen(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                  />
                 </div>
-              </div>
-
-              {/* Mağaza */}
-              <div>
-                <Label htmlFor="magaza_id">Mağaza</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.magaza_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, magaza_id: value })
+                <div>
+                  <Label htmlFor="satis_tarihi">Mağaza Giriş Tarihi</Label>
+                  <Input
+                    type="date"
+                    id="satis_tarihi"
+                    value={formData.satis_tarihi}
+                    onChange={(e) =>
+                      setFormData({ ...formData, satis_tarihi: e.target.value })
                     }
-                    disabled={!formData.firma_id || magazalar.length === 0}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Mağaza seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {magazalar.map((magaza) => (
-                        <SelectItem key={magaza.id} value={magaza.id}>
-                          {magaza.magaza_adi}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddMagazaDialogOpen(true)}
-                    disabled={!formData.firma_id}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                  />
                 </div>
-              </div>
-
-              {/* Operatör */}
-              <div>
-                <Label htmlFor="operator_id">Operatör</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.operator_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, operator_id: value })
+                <div>
+                  <Label htmlFor="grup_pax">Grup PAX</Label>
+                  <Input
+                    type="number"
+                    id="grup_pax"
+                    value={formData.grup_pax}
+                    onChange={(e) =>
+                      setFormData({ ...formData, grup_pax: e.target.value })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Operatör seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operatorler.map((operator) => (
-                        <SelectItem key={operator.id} value={operator.id}>
-                          {operator.operator_adi}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddOperatorDialogOpen(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                  />
                 </div>
-              </div>
-
-              {/* Tur */}
-              <div>
-                <Label htmlFor="tur_id">Tur</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.tur_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, tur_id: value })
+                <div>
+                  <Label htmlFor="magaza_pax">Mağaza PAX</Label>
+                  <Input
+                    type="number"
+                    id="magaza_pax"
+                    value={formData.magaza_pax}
+                    onChange={(e) =>
+                      setFormData({ ...formData, magaza_pax: e.target.value })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tur seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {turlar.map((tur) => (
-                        <SelectItem key={tur.id} value={tur.id}>
-                          {tur.tur_adi}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddTurDialogOpen(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tur_id">Tur</Label>
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      id="tur_id"
+                      value={formData.tur_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, tur_id: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tur Seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {turlar.map((tur) => (
+                          <SelectItem key={tur.id} value={tur.id}>
+                            {tur.tur_adi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddTurDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="rehber_id">Rehber</Label>
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      id="rehber_id"
+                      value={formData.rehber_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, rehber_id: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Rehber Seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rehberler.map((rehber) => (
+                          <SelectItem key={rehber.id} value={rehber.id}>
+                            {rehber.rehber_adi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddRehberDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              {/* Grup Geliş Tarihi */}
-              <div>
-                <Label htmlFor="grup_gelis_tarihi">Grup Geliş Tarihi</Label>
-                <Input
-                  id="grup_gelis_tarihi"
-                  type="date"
-                  value={formData.grup_gelis_tarihi}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      grup_gelis_tarihi: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* Mağaza Giriş Tarihi */}
-              <div>
-                <Label htmlFor="satis_tarihi">Mağaza Giriş Tarihi</Label>
-                <Input
-                  id="satis_tarihi"
-                  type="date"
-                  value={formData.satis_tarihi}
-                  onChange={(e) =>
-                    setFormData({ ...formData, satis_tarihi: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* Grup PAX */}
-              <div>
-                <Label htmlFor="grup_pax">Grup PAX</Label>
-                <Input
-                  id="grup_pax"
-                  type="number"
-                  value={formData.grup_pax}
-                  onChange={(e) =>
-                    setFormData({ ...formData, grup_pax: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* Mağaza PAX */}
-              <div>
-                <Label htmlFor="magaza_pax">Mağaza PAX</Label>
-                <Input
-                  id="magaza_pax"
-                  type="number"
-                  value={formData.magaza_pax}
-                  onChange={(e) =>
-                    setFormData({ ...formData, magaza_pax: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* Rehber */}
-              <div>
-                <Label htmlFor="rehber_id">Rehber</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.rehber_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, rehber_id: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Rehber seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rehberler.map((rehber) => (
-                        <SelectItem key={rehber.id} value={rehber.id}>
-                          {rehber.rehber_adi}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Satış Ürünleri */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Satış Ürünleri</Label>
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddRehberDialogOpen(true)}
+                    variant="secondary"
+                    onClick={addUrunRow}
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ürün Ekle
                   </Button>
                 </div>
-              </div>
-            </div>
-
-            {/* Ürün Satış Kalemleri */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Label className="text-lg font-semibold">Satış Kalemleri</Label>
-                <Button type="button" variant="outline" onClick={addUrunRow}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ürün Ekle
-                </Button>
-              </div>
-
-              {satisUrunleri.map((satisUrun, index) => (
-                <Card key={index} className="p-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {satisUrunleri.map((urun, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-center p-4 border rounded-lg"
+                  >
                     <div>
-                      <Label>Ürün</Label>
-                      <div className="flex gap-2">
+                      <Label htmlFor={`urun_id_${index}`}>Ürün</Label>
+                      <div className="flex items-center space-x-2">
                         <Select
-                          value={satisUrun.urun_id}
+                          id={`urun_id_${index}`}
+                          value={urun.urun_id}
                           onValueChange={(value) => {
-                            console.log(
-                              "Select onValueChange tetiklendi:",
-                              value
-                            );
+                            updateUrunRow(index, "urun_id", value);
                             handleUrunSelection(index, value);
                           }}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Ürün seçin" />
+                            <SelectValue placeholder="Ürün Seçin" />
                           </SelectTrigger>
                           <SelectContent>
-                            {magazaUrunleri.map((magazaUrun) => (
-                              <SelectItem
-                                key={`${magazaUrun.id}-${magazaUrun.urun_id}`}
-                                value={magazaUrun.urun_id}
-                              >
-                                {Array.isArray(magazaUrun.urunler)
-                                  ? magazaUrun.urunler[0]?.urun_adi ||
-                                    "Ürün adı bulunamadı"
-                                  : magazaUrun.urunler?.urun_adi ||
-                                    "Ürün adı bulunamadı"}
+                            {urunler.map((urun) => (
+                              <SelectItem key={urun.id} value={urun.id}>
+                                {urun.urun_adi}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <Button
                           type="button"
-                          variant="outline"
-                          size="sm"
+                          variant="secondary"
+                          size="icon"
                           onClick={() => setIsAddUrunDialogOpen(true)}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-
                     <div>
-                      <Label>Adet</Label>
+                      <Label htmlFor={`adet_${index}`}>Adet</Label>
                       <Input
                         type="number"
-                        value={satisUrun.adet}
+                        id={`adet_${index}`}
+                        value={urun.adet}
                         onChange={(e) =>
                           updateUrunRow(index, "adet", e.target.value)
                         }
-                        min="1"
                       />
                     </div>
-
-                    {(userRole === "admin" || userRole === "standart") && (
+                    {(userRole === "admin" ||
+                      (userRole === "standart" &&
+                        urun.bildirim_tipi === "rehber")) && (
                       <div>
-                        <Label>Bildirim Tipi</Label>
-                        <Select
-                          value={satisUrun.bildirim_tipi}
-                          onValueChange={(value) =>
-                            updateUrunRow(
-                              index,
-                              "bildirim_tipi",
-                              value as "magaza" | "rehber"
-                            )
-                          }
-                          disabled={userRole === "standart"} // Operator sadece rehber bildirimi yapabilir
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="magaza">
-                              Mağaza Bildirimi
-                            </SelectItem>
-                            <SelectItem value="rehber">
-                              Rehber Bildirimi
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {canSeePrices(satisUrun.bildirim_tipi) && (
-                      <div>
-                        <Label>Birim Fiyat</Label>
+                        <Label htmlFor={`birim_fiyat_${index}`}>
+                          Birim Fiyat
+                        </Label>
                         <Input
                           type="number"
-                          step="0.01"
-                          value={satisUrun.birim_fiyat}
+                          id={`birim_fiyat_${index}`}
+                          value={urun.birim_fiyat}
                           onChange={(e) =>
                             updateUrunRow(index, "birim_fiyat", e.target.value)
                           }
                         />
                       </div>
                     )}
-
                     <div>
-                      <Label>Durum</Label>
+                      <Label htmlFor={`bildirim_tipi_${index}`}>
+                        Bildirim Tipi
+                      </Label>
                       <Select
-                        value={satisUrun.status}
+                        value={urun.bildirim_tipi}
                         onValueChange={(value) =>
-                          updateUrunRow(
-                            index,
-                            "status",
-                            value as "onaylandı" | "beklemede" | "iptal"
-                          )
+                          updateUrunRow(index, "bildirim_tipi", value)
+                        }
+                        disabled={userRole === "standart"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="magaza">Mağaza</SelectItem>
+                          <SelectItem value="rehber">Rehber</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor={`status_${index}`}>Durum</Label>
+                      <Select
+                        value={urun.status}
+                        onValueChange={(value) =>
+                          updateUrunRow(index, "status", value)
                         }
                       >
                         <SelectTrigger>
@@ -2314,138 +2445,148 @@ urun_adi
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      {userRole === "admin" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            updateUrunRow(
+                              index,
+                              "showCommissions",
+                              !urun.showCommissions
+                            )
+                          }
+                        >
+                          {urun.showCommissions ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                      {satisUrunleri.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeUrunRow(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
 
-                    <div className="flex items-end justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeUrunRow(index)}
-                        disabled={satisUrunleri.length === 1}
-                        className="mr-2"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      {userRole === "admin" &&
-                        satisUrun.bildirim_tipi === "magaza" && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              updateUrunRow(
-                                index,
-                                "showCommissions",
-                                !satisUrun.showCommissions
-                              )
-                            }
-                          >
-                            {satisUrun.showCommissions ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                            <span className="sr-only">
-                              {satisUrun.showCommissions
-                                ? "Komisyonları Gizle"
-                                : "Komisyonları Göster"}
-                            </span>
-                          </Button>
-                        )}
+                    {/* Komisyon Oranları - Sadece admin için ve showCommissions true ise */}
+                    {userRole === "admin" &&
+                      urun.showCommissions &&
+                      urun.bildirim_tipi === "magaza" && (
+                        <div className="col-span-full grid grid-cols-4 gap-4 mt-2 p-3 bg-gray-50 rounded">
+                          <div>
+                            <Label htmlFor={`acente_komisyonu_${index}`}>
+                              Acente Komisyonu (%)
+                            </Label>
+                            <Input
+                              type="number"
+                              id={`acente_komisyonu_${index}`}
+                              value={urun.acente_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "acente_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`rehber_komisyonu_${index}`}>
+                              Rehber Komisyonu (%)
+                            </Label>
+                            <Input
+                              type="number"
+                              id={`rehber_komisyonu_${index}`}
+                              value={urun.rehber_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "rehber_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`kaptan_komisyonu_${index}`}>
+                              Kaptan Komisyonu (%)
+                            </Label>
+                            <Input
+                              type="number"
+                              id={`kaptan_komisyonu_${index}`}
+                              value={urun.kaptan_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "kaptan_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`ofis_komisyonu_${index}`}>
+                              Ofis Komisyonu (%)
+                            </Label>
+                            <Input
+                              type="number"
+                              id={`ofis_komisyonu_${index}`}
+                              value={urun.ofis_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "ofis_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Açıklama alanı */}
+                    <div className="col-span-full">
+                      <Label htmlFor={`satis_aciklamasi_${index}`}>
+                        Satış Açıklaması
+                      </Label>
+                      <Textarea
+                        id={`satis_aciklamasi_${index}`}
+                        value={urun.satis_aciklamasi}
+                        onChange={(e) =>
+                          updateUrunRow(
+                            index,
+                            "satis_aciklamasi",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Satış ile ilgili açıklama..."
+                        rows={2}
+                      />
                     </div>
                   </div>
-                  <div>
-                    <Label>Açıklama</Label>
-                    <Textarea
-                      value={satisUrun.satis_aciklamasi}
-                      onChange={(e) =>
-                        updateUrunRow(index, "satis_aciklamasi", e.target.value)
-                      }
-                      placeholder="Satış kalemi için açıklama girin"
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* Conditional rendering for commission inputs */}
-                  {userRole === "admin" &&
-                    satisUrun.bildirim_tipi === "magaza" &&
-                    satisUrun.showCommissions && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 border-t pt-4">
-                        <div>
-                          <Label>Acente Komisyonu (%)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={satisUrun.acente_komisyonu}
-                            onChange={(e) =>
-                              updateUrunRow(
-                                index,
-                                "acente_komisyonu",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Varsayılan kullanılacak"
-                          />
-                        </div>
-                        <div>
-                          <Label>Rehber Komisyonu (%)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={satisUrun.rehber_komisyonu}
-                            onChange={(e) =>
-                              updateUrunRow(
-                                index,
-                                "rehber_komisyonu",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Varsayılan kullanılacak"
-                          />
-                        </div>
-                        <div>
-                          <Label>Kaptan Komisyonu (%)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={satisUrun.kaptan_komisyonu}
-                            onChange={(e) =>
-                              updateUrunRow(
-                                index,
-                                "kaptan_komisyonu",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Varsayılan kullanılacak"
-                          />
-                        </div>
-                        <div>
-                          <Label>Ofis Komisyonu (%)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={satisUrun.ofis_komisyonu}
-                            onChange={(e) =>
-                              updateUrunRow(
-                                index,
-                                "ofis_komisyonu",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Varsayılan kullanılacak"
-                          />
-                        </div>
-                      </div>
-                    )}
-                </Card>
-              ))}
+                ))}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleMainDialogClose(false)}
+                onClick={() => setIsDialogOpen(false)}
               >
                 İptal
               </Button>
@@ -2457,96 +2598,41 @@ urun_adi
         </DialogContent>
       </Dialog>
 
-      {/* Komisyon Oranları Görüntüleme Diyalogu */}
-      <Dialog open={isOranlarDialogOpen} onOpenChange={setIsOranlarDialogOpen}>
+      {/* Onay Diyalogu - Değişiklikleri atmak için */}
+      <Dialog
+        open={isConfirmCloseDialogOpen}
+        onOpenChange={setIsConfirmCloseDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Komisyon Oranları</DialogTitle>
+            <DialogTitle>Kaydedilmemiş Değişiklikler</DialogTitle>
             <DialogDescription>
-              Seçili ürün için komisyon oranları ve tutarları
+              Formda kaydedilmemiş değişiklikler var. Bu değişiklikleri atmak
+              istediğinizden emin misiniz?
             </DialogDescription>
           </DialogHeader>
-          {selectedSatis && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Ürün</Label>
-                  <p className="font-medium">{selectedSatis.urun_adi}</p>
-                </div>
-                <div>
-                  <Label>Bildirim Tipi</Label>
-                  <Badge
-                    variant={
-                      selectedSatis.bildirim_tipi === "magaza"
-                        ? "default"
-                        : "secondary"
-                    }
-                  >
-                    {selectedSatis.bildirim_tipi === "magaza"
-                      ? "Mağaza"
-                      : "Rehber"}
-                  </Badge>
-                </div>
-              </div>
-
-              {selectedSatis.bildirim_tipi === "magaza" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Acente Komisyonu</Label>
-                    <p>%{selectedSatis.acente_komisyonu || 0}</p>
-                    <p className="text-sm text-gray-500">
-                      €{selectedSatis.acente_komisyon_tutari || 0}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Rehber Komisyonu</Label>
-                    <p>%{selectedSatis.rehber_komisyonu || 0}</p>
-                    <p className="text-sm text-gray-500">
-                      €{selectedSatis.rehber_komisyon_tutari || 0}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Kaptan Komisyonu</Label>
-                    <p>%{selectedSatis.kaptan_komisyonu || 0}</p>
-                    <p className="text-sm text-gray-500">
-                      €{selectedSatis.kaptan_komisyon_tutari || 0}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Ofis Komisyonu</Label>
-                    <p>%{selectedSatis.ofis_komisyonu || 0}</p>
-                    <p className="text-sm text-gray-500">
-                      €{selectedSatis.ofis_komisyon_tutari || 0}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-4 border-t">
-                <div className="flex justify-between">
-                  <span className="font-medium">Toplam Tutar:</span>
-                  <span className="font-bold">
-                    €{selectedSatis.toplam_tutar || 0}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={cancelDiscardChanges}>
+              İptal
+            </Button>
+            <Button variant="destructive" onClick={confirmDiscardChanges}>
+              Değişiklikleri At
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Yeni ekleme diyalogları */}
+      {/* Add Dialog Components */}
       <AddUrunDialog
         open={isAddUrunDialogOpen}
         onOpenChange={setIsAddUrunDialogOpen}
         onUrunAdded={handleUrunAdded}
-        selectedMagazaId={formData.magaza_id || undefined}
       />
       <AddMagazaDialog
         open={isAddMagazaDialogOpen}
         onOpenChange={setIsAddMagazaDialogOpen}
         onMagazaAdded={handleMagazaAdded}
-        selectedFirmaId={formData.firma_id || undefined} // Firma ID'si string olarak geçiyor
+        selectedFirmaId={formData.firma_id}
       />
       <AddOperatorDialog
         open={isAddOperatorDialogOpen}
@@ -2568,32 +2654,6 @@ urun_adi
         onOpenChange={setIsAddRehberDialogOpen}
         onRehberAdded={handleRehberAdded}
       />
-
-      {/* Değişiklikleri Kaydetmeden Çıkış Onayı Diyaloğu */}
-      <AlertDialog
-        open={isConfirmCloseDialogOpen}
-        onOpenChange={setIsConfirmCloseDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Değişiklikleri Kaydetmeden Çıkmak İstiyor Musunuz?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Kaydedilmeyen değişiklikleriniz var. Çıkarsanız bu değişiklikler
-              kaybolacaktır. Devam etmek istiyor musunuz?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDiscardChanges}>
-              İptal
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDiscardChanges}>
-              Değişiklikleri At
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

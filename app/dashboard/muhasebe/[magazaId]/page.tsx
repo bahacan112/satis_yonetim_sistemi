@@ -89,6 +89,7 @@ type ProcessedSaleRow = {
   satis_tarihi: string | null;
   grup_gelis_tarihi: string | null;
   operator_adi: string | null;
+  tur_adi: string | null;
   grup_pax: number | null;
   magaza_pax: number | null;
   rehber_adi: string | null;
@@ -185,6 +186,7 @@ export default function MagazaDetayPage() {
           satis_tarihi: item.satis_tarihi,
           grup_gelis_tarihi: item.grup_gelis_tarihi,
           operator_adi: item.operator_adi,
+          tur_adi: item.tur_adi,
           grup_pax: item.grup_pax,
           magaza_pax: item.magaza_pax,
           rehber_adi: item.rehber_adi,
@@ -262,46 +264,46 @@ export default function MagazaDetayPage() {
           .from("magaza_satis_kalemleri")
           .select(
             `
-           satis_id,
-           urun_id,
-           adet,
-           birim_fiyat,
-           acente_komisyonu,
-           rehber_komisyonu,
-           kaptan_komisyonu,
-           ofis_komisyonu,
-           status,
-           satislar!inner (
-             id,
-             magaza_giris_tarihi,
-             grup_gelis_tarihi,
-             grup_pax,
-             magaza_pax,
-             magaza_id,
-             rehber_id,
-             tur_id,
-             operator_id,
-             magazalar!inner (
-               id,
-               magaza_adi,
-               firmalar (
-                 firma_adi
-               )
-             ),
-             rehberler (
-               rehber_adi
-             ),
-             turlar (
-               tur_adi,
-               operatorler (
-                 operator_adi
-               )
-             )
-           ),
-           urunler (
-             urun_adi
-           )
-         `
+          satis_id,
+          urun_id,
+          adet,
+          birim_fiyat,
+          acente_komisyonu,
+          rehber_komisyonu,
+          kaptan_komisyonu,
+          ofis_komisyonu,
+          status,
+          satislar!inner (
+            id,
+            magaza_giris_tarihi,
+            grup_gelis_tarihi,
+            grup_pax,
+            magaza_pax,
+            magaza_id,
+            rehber_id,
+            tur_id,
+            operator_id,
+            magazalar!inner (
+              id,
+              magaza_adi,
+              firmalar (
+                firma_adi
+              )
+            ),
+            rehberler (
+              rehber_adi
+            ),
+            turlar (
+              tur_adi,
+              operatorler (
+                operator_adi
+              )
+            )
+          ),
+          urunler (
+            urun_adi
+          )
+        `
           )
           .eq("satislar.magaza_id", id)
           .eq("status", status);
@@ -570,11 +572,12 @@ export default function MagazaDetayPage() {
         return;
       }
 
-      // CSV Headers
+      // CSV Headers - Tur sütunu eklendi
       const headers = [
         "Tarih",
         "Tip",
         "Operatör/Kanal",
+        "Tur",
         "Grup Pax",
         "Mağaza Pax",
         "Rehber",
@@ -593,6 +596,9 @@ export default function MagazaDetayPage() {
           item.type === "sale"
             ? (item as ProcessedSaleRow).operator_adi || "-"
             : (item as TahsilatDetay).odeme_kanali,
+          item.type === "sale"
+            ? (item as ProcessedSaleRow).tur_adi || "-"
+            : "-", // Tur adı eklendi
           item.type === "sale"
             ? String((item as ProcessedSaleRow).grup_pax || "-")
             : "-",
@@ -1041,6 +1047,7 @@ export default function MagazaDetayPage() {
                       <TableHead>Tarih</TableHead>
                       <TableHead>Tip</TableHead>
                       <TableHead>Operatör/Kanal</TableHead>
+                      <TableHead>Tur</TableHead>
                       <TableHead>Grup Pax</TableHead>
                       <TableHead>Mağaza Pax</TableHead>
                       <TableHead>Rehber</TableHead>
@@ -1058,7 +1065,7 @@ export default function MagazaDetayPage() {
                     {combinedDetails.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={6 + allProductNames.length + 5}
+                          colSpan={7 + allProductNames.length + 5}
                           className="text-center text-gray-500"
                         >
                           Bu dönem için detay bulunmamaktadır.
@@ -1071,6 +1078,7 @@ export default function MagazaDetayPage() {
                             <TableCell>{item.displayDate}</TableCell>
                             <TableCell>Satış</TableCell>
                             <TableCell>{item.operator_adi}</TableCell>
+                            <TableCell>{item.tur_adi}</TableCell>
                             <TableCell>{item.grup_pax || "-"}</TableCell>
                             <TableCell>{item.magaza_pax || "-"}</TableCell>
                             <TableCell>{item.rehber_adi}</TableCell>
@@ -1109,6 +1117,7 @@ export default function MagazaDetayPage() {
                             <TableCell>{item.displayDate}</TableCell>
                             <TableCell>Tahsilat</TableCell>
                             <TableCell>{item.odeme_kanali}</TableCell>
+                            <TableCell>{/* Tur for tahsilat */}</TableCell>
                             <TableCell>{/* Grup Pax for tahsilat */}</TableCell>
                             <TableCell>{/* Mağaza Pax for tahsil */}</TableCell>
                             <TableCell>{/* Rehber for tahsilat */}</TableCell>
@@ -1218,6 +1227,7 @@ export default function MagazaDetayPage() {
                     <TableRow>
                       <TableHead>Tarih</TableHead>
                       <TableHead>Operatör</TableHead>
+                      <TableHead>Tur</TableHead>
                       <TableHead>Grup Pax</TableHead>
                       <TableHead>Mağaza Pax</TableHead>
                       <TableHead>Rehber</TableHead>
@@ -1234,7 +1244,7 @@ export default function MagazaDetayPage() {
                     {combinedDetails.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={6 + allProductNames.length + 2}
+                          colSpan={7 + allProductNames.length + 2}
                           className="text-center text-gray-500"
                         >
                           Bu dönem için iptal edilen satış bulunmamaktadır.
@@ -1250,6 +1260,7 @@ export default function MagazaDetayPage() {
                           >
                             <TableCell>{saleItem.displayDate}</TableCell>
                             <TableCell>{saleItem.operator_adi}</TableCell>
+                            <TableCell>{saleItem.tur_adi}</TableCell>
                             <TableCell>{saleItem.grup_pax || "-"}</TableCell>
                             <TableCell>{saleItem.magaza_pax || "-"}</TableCell>
                             <TableCell>{saleItem.rehber_adi}</TableCell>
@@ -1361,6 +1372,7 @@ export default function MagazaDetayPage() {
                     <TableRow>
                       <TableHead>Tarih</TableHead>
                       <TableHead>Operatör</TableHead>
+                      <TableHead>Tur</TableHead>
                       <TableHead>Grup Pax</TableHead>
                       <TableHead>Mağaza Pax</TableHead>
                       <TableHead>Rehber</TableHead>
@@ -1377,7 +1389,7 @@ export default function MagazaDetayPage() {
                     {combinedDetails.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={6 + allProductNames.length + 2}
+                          colSpan={7 + allProductNames.length + 2}
                           className="text-center text-gray-500"
                         >
                           Bu dönem için bekleyen satış bulunmamaktadır.
@@ -1393,6 +1405,7 @@ export default function MagazaDetayPage() {
                           >
                             <TableCell>{saleItem.displayDate}</TableCell>
                             <TableCell>{saleItem.operator_adi}</TableCell>
+                            <TableCell>{saleItem.tur_adi}</TableCell>
                             <TableCell>{saleItem.grup_pax || "-"}</TableCell>
                             <TableCell>{saleItem.magaza_pax || "-"}</TableCell>
                             <TableCell>{saleItem.rehber_adi}</TableCell>
