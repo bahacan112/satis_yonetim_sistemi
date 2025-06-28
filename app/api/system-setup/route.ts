@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 /**
  * Checks whether the required database tables exist and if an admin user is already present.
  * Returns:
- *  • { tablesExist: false, hasAdminUser: false }  ➜ Tables are missing
+ *  • { tablesExist: false, hasAdminUser: false } ➜ Tables are missing
  *  • { tablesExist: true,  hasAdminUser: false } ➜ Tables exist but no admin
  *  • { tablesExist: true,  hasAdminUser: true }  ➜ Ready - nothing to set up
  *
@@ -63,7 +63,7 @@ export async function GET() {
 
     const hasAdminUser = (admins?.length ?? 0) > 0;
     return NextResponse.json({ tablesExist: true, hasAdminUser });
-  } catch (err: any) {
+  } catch (err) {
     console.error("System-setup API unexpected error:", err);
     return NextResponse.json(
       {

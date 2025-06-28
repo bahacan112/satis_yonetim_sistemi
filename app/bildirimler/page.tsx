@@ -17,6 +17,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface Notification {
   id: string;
@@ -34,6 +42,9 @@ export default function BildirimlerPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [selectedNotification, setSelectedNotification] =
+    useState<Notification | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
@@ -101,6 +112,11 @@ export default function BildirimlerPage() {
           notif.id === id ? { ...notif, read: true } : notif
         )
       );
+      if (selectedNotification && selectedNotification.id === id) {
+        setSelectedNotification((prev) =>
+          prev ? { ...prev, read: true } : null
+        );
+      }
 
       toast({
         title: "Başarılı!",
@@ -130,6 +146,11 @@ export default function BildirimlerPage() {
           notif.id === id ? { ...notif, read: false } : notif
         )
       );
+      if (selectedNotification && selectedNotification.id === id) {
+        setSelectedNotification((prev) =>
+          prev ? { ...prev, read: false } : null
+        );
+      }
 
       toast({
         title: "Başarılı!",
@@ -157,6 +178,7 @@ export default function BildirimlerPage() {
       if (error) throw error;
 
       setNotifications((prev) => prev.filter((notif) => notif.id !== id));
+      setIsDialogOpen(false); // Close dialog if the deleted notification was open
 
       toast({
         title: "Başarılı!",
@@ -185,6 +207,11 @@ export default function BildirimlerPage() {
       setNotifications((prev) =>
         prev.map((notif) => ({ ...notif, read: true }))
       );
+      if (selectedNotification) {
+        setSelectedNotification((prev) =>
+          prev ? { ...prev, read: true } : null
+        );
+      }
 
       toast({
         title: "Başarılı!",
@@ -229,6 +256,14 @@ export default function BildirimlerPage() {
   });
 
   const unreadCount = notifications.filter((notif) => !notif.read).length;
+
+  const handleRowClick = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setIsDialogOpen(true);
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+  };
 
   if (loading) {
     return <div>Yükleniyor...</div>;
@@ -313,7 +348,12 @@ export default function BildirimlerPage() {
                 {filteredNotifications.map((notification) => (
                   <TableRow
                     key={notification.id}
-                    className={!notification.read ? "bg-blue-50" : ""}
+                    className={
+                      !notification.read
+                        ? "bg-blue-50 cursor-pointer"
+                        : "cursor-pointer"
+                    }
+                    onClick={() => handleRowClick(notification)}
                   >
                     <TableCell>
                       {notification.read ? (
@@ -338,7 +378,9 @@ export default function BildirimlerPage() {
                         "tr-TR"
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      {" "}
+                      {/* Stop propagation to prevent dialog from opening when clicking buttons */}
                       <div className="flex gap-2">
                         {notification.read ? (
                           <Button
@@ -374,6 +416,93 @@ export default function BildirimlerPage() {
           )}
         </CardContent>
       </Card>
+
+      {selectedNotification && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>{selectedNotification.title}</DialogTitle>
+              <DialogDescription>Bildirim Detayları</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-sm font-medium text-gray-500">
+                  Durum:
+                </span>
+                <div className="col-span-3">
+                  {selectedNotification.read ? (
+                    <Badge variant="secondary">Okundu</Badge>
+                  ) : (
+                    <Badge variant="default">Yeni</Badge>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-sm font-medium text-gray-500">Tip:</span>
+                <div className="col-span-3">
+                  <Badge
+                    variant={getTypeBadgeVariant(selectedNotification.type)}
+                  >
+                    {getTypeLabel(selectedNotification.type)}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <span className="text-sm font-medium text-gray-500">
+                  Mesaj:
+                </span>
+                <p className="col-span-3 text-sm text-gray-700 whitespace-pre-wrap">
+                  {selectedNotification.message}
+                </p>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-sm font-medium text-gray-500">
+                  Tarih:
+                </span>
+                <p className="col-span-3 text-sm text-gray-700">
+                  {new Date(selectedNotification.created_at).toLocaleString(
+                    "tr-TR"
+                  )}
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="flex justify-between sm:justify-between">
+              <div className="flex gap-2">
+                {selectedNotification.read ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => markAsUnread(selectedNotification.id)}
+                  >
+                    <EyeOff className="w-4 h-4 mr-2" />
+                    Okunmadı İşaretle
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => markAsRead(selectedNotification.id)}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Okundu İşaretle
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  onClick={() => deleteNotification(selectedNotification.id)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Sil
+                </Button>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Kapat
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
