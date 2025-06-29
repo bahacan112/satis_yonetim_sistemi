@@ -29,6 +29,7 @@ import {
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Types for the data fetched from the view
 interface MuhasebeSummaryRow {
@@ -335,7 +336,7 @@ export default function MuhasebePage() {
       </div>
 
       {/* Search and Export */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -346,7 +347,7 @@ export default function MuhasebePage() {
             className="pl-8"
           />
         </div>
-        <Button>
+        <Button className="w-full sm:w-auto">
           <Download className="w-4 h-4 mr-2" />
           Dışa Aktar
         </Button>
@@ -358,265 +359,283 @@ export default function MuhasebePage() {
           <CardTitle>Mağaza Muhasebe Detayları</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]"></TableHead>
-                <TableHead>Firma / Mağaza</TableHead>
-                <TableHead>Onaylı Satış</TableHead>
-                <TableHead>Bekleme Satış</TableHead>
-                <TableHead>İptal Satış</TableHead>
-                <TableHead>Acente Hakediş</TableHead>
-                <TableHead>Bekleme Acente Hakediş</TableHead>
-                <TableHead>Acente Tahsilat</TableHead>
-                <TableHead>Ofis Hakediş</TableHead>
-                <TableHead>Ofis Tahsilat</TableHead>
-                <TableHead>Kalan Acente Hakedişi</TableHead>
-                <TableHead>Kalan Ofis Hakedişi</TableHead>
-                <TableHead>Durum</TableHead>
-                <TableHead className="text-right">İşlem</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.length === 0 ? (
+          <ScrollArea>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={13}
-                    className="text-center text-muted-foreground"
-                  >
-                    Gösterilecek veri bulunamadı.
-                  </TableCell>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Firma / Mağaza</TableHead>
+                  <TableHead className="md:w-[150px]">Onaylı Satış</TableHead>
+                  <TableHead className="md:w-[150px]">Bekleme Satış</TableHead>
+                  <TableHead className="md:w-[150px]">İptal Satış</TableHead>
+                  <TableHead className="md:w-[150px]">Acente Hakediş</TableHead>
+                  <TableHead className="md:w-[150px]">
+                    Bekleme Acente Hakediş
+                  </TableHead>
+                  <TableHead className="md:w-[150px]">
+                    Acente Tahsilat
+                  </TableHead>
+                  <TableHead className="md:w-[150px]">Ofis Hakediş</TableHead>
+                  <TableHead className="md:w-[150px]">Ofis Tahsilat</TableHead>
+                  <TableHead className="md:w-[150px]">
+                    Kalan Acente Hakedişi
+                  </TableHead>
+                  <TableHead className="md:w-[150px]">
+                    Kalan Ofis Hakedişi
+                  </TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead className="text-right">İşlem</TableHead>
                 </TableRow>
-              ) : (
-                filteredData.map((firma) => (
-                  <React.Fragment key={firma.firma_id}>
-                    <TableRow className="bg-gray-50 hover:bg-gray-100">
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleFirmExpansion(firma.firma_id)}
+              </TableHeader>
+              <TableBody>
+                {filteredData.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={14}
+                      className="text-center text-muted-foreground"
+                    >
+                      Gösterilecek veri bulunamadı.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredData.map((firma) => (
+                    <React.Fragment key={firma.firma_id}>
+                      <TableRow className="bg-gray-50 hover:bg-gray-100">
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleFirmExpansion(firma.firma_id)}
+                          >
+                            {expandedFirms.has(firma.firma_id) ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <span className="font-bold text-lg">
+                            {firma.firma_adi}
+                          </span>
+                          <Badge variant="secondary" className="ml-2 text-sm">
+                            {firma.magazalar.length} Mağaza
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          ₺{firma.total_toplam_satis_tutari.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ₺{firma.total_bekleyen_satis_tutari.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ₺{firma.total_iptal_satis_tutari.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ₺
+                          {firma.total_toplam_acente_komisyon_tutari.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ₺
+                          {firma.total_bekleyen_acente_komisyon_tutari.toFixed(
+                            2
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          ₺{firma.total_toplam_acente_tahsilat.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ₺{firma.total_toplam_ofis_komisyon_tutari.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          ₺{firma.total_toplam_ofis_tahsilat.toFixed(2)}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            firma.total_kalan_acente_alacagi > 0
+                              ? "text-red-600"
+                              : "text-green-600",
+                            "font-semibold"
+                          )}
                         >
-                          {expandedFirms.has(firma.firma_id) ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
+                          ₺{firma.total_kalan_acente_alacagi.toFixed(2)}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            firma.total_kalan_ofis_alacagi > 0
+                              ? "text-red-600"
+                              : "text-green-600",
+                            "font-semibold"
                           )}
-                        </Button>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <span className="font-bold text-lg">
-                          {firma.firma_adi}
-                        </span>
-                        <Badge variant="secondary" className="ml-2 text-sm">
-                          {firma.magazalar.length} Mağaza
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_toplam_satis_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_bekleyen_satis_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_iptal_satis_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_toplam_acente_komisyon_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺
-                        {firma.total_bekleyen_acente_komisyon_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_toplam_acente_tahsilat.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_toplam_ofis_komisyon_tutari.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        ₺{firma.total_toplam_ofis_tahsilat.toFixed(2)}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          firma.total_kalan_acente_alacagi > 0
-                            ? "text-red-600"
-                            : "text-green-600",
-                          "font-semibold"
-                        )}
-                      >
-                        ₺{firma.total_kalan_acente_alacagi.toFixed(2)}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          firma.total_kalan_ofis_alacagi > 0
-                            ? "text-red-600"
-                            : "text-green-600",
-                          "font-semibold"
-                        )}
-                      >
-                        ₺{firma.total_kalan_ofis_alacagi.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-center gap-1">
-                          {firma.total_onaylanan_kalem_sayisi > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="text-green-700 border-green-200"
-                            >
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              {firma.total_onaylanan_kalem_sayisi}
-                            </Badge>
-                          )}
-                          {firma.total_bekleyen_kalem_sayisi > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="text-orange-700 border-orange-200"
-                            >
-                              <Clock className="w-3 h-3 mr-1" />
-                              {firma.total_bekleyen_kalem_sayisi}
-                            </Badge>
-                          )}
-                          {firma.total_iptal_kalem_sayisi > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="text-red-700 border-red-200"
-                            >
-                              <XCircle className="w-3 h-3 mr-1" />
-                              {firma.total_iptal_kalem_sayisi}
-                            </Badge>
-                          )}
-                          {firma.total_toplam_kalem_sayisi === 0 && (
-                            <Badge
-                              variant="outline"
-                              className="text-gray-600 border-gray-500/10"
-                            >
-                              Veri Yok
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {/* Firma seviyesinde detay butonu yok, mağazalar için olacak */}
-                      </TableCell>
-                    </TableRow>
+                        >
+                          ₺{firma.total_kalan_ofis_alacagi.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center gap-1">
+                            {firma.total_onaylanan_kalem_sayisi > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-green-600 border-green-100"
+                              >
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                {firma.total_onaylanan_kalem_sayisi}
+                              </Badge>
+                            )}
+                            {firma.total_bekleyen_kalem_sayisi > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-orange-600 border-orange-100"
+                              >
+                                <Clock className="w-3 h-3 mr-1" />
+                                {firma.total_bekleyen_kalem_sayisi}
+                              </Badge>
+                            )}
+                            {firma.total_iptal_kalem_sayisi > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-red-600 border-red-100"
+                              >
+                                <XCircle className="w-3 h-3 mr-1" />
+                                {firma.total_iptal_kalem_sayisi}
+                              </Badge>
+                            )}
+                            {firma.total_toplam_kalem_sayisi === 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-gray-600 border-gray-500/10"
+                              >
+                                Veri Yok
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {/* Firma seviyesinde detay butonu yok, mağazalar için olacak */}
+                        </TableCell>
+                      </TableRow>
 
-                    {expandedFirms.has(firma.firma_id) &&
-                      firma.magazalar.map((magaza, magazaIndex) => (
-                        <TableRow
-                          key={magaza.magaza_id}
-                          className={`hover:bg-gray-200 transition-colors ${
-                            magazaIndex % 2 === 0 ? "bg-gray-100" : "bg-gray-50"
-                          }`}
-                        >
-                          <TableCell></TableCell>{" "}
-                          {/* Empty cell for expand button column */}
-                          <TableCell className="pl-8 font-medium text-gray-700">
-                            {magaza.magaza_adi}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.toplam_satis_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.bekleyen_satis_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.iptal_satis_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.toplam_acente_komisyon_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.bekleyen_acente_komisyon_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.toplam_acente_tahsilat.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.toplam_ofis_komisyon_tutari.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            ₺{magaza.toplam_ofis_tahsilat.toFixed(2)}
-                          </TableCell>
-                          <TableCell
-                            className={cn(
-                              magaza.kalan_acente_alacagi > 0
-                                ? "text-red-600"
-                                : "text-green-600",
-                              "font-semibold"
-                            )}
+                      {expandedFirms.has(firma.firma_id) &&
+                        firma.magazalar.map((magaza, magazaIndex) => (
+                          <TableRow
+                            key={magaza.magaza_id}
+                            className={`hover:bg-gray-200 transition-colors ${
+                              magazaIndex % 2 === 0
+                                ? "bg-gray-100"
+                                : "bg-gray-50"
+                            }`}
                           >
-                            ₺{magaza.kalan_acente_alacagi.toFixed(2)}
-                          </TableCell>
-                          <TableCell
-                            className={cn(
-                              magaza.kalan_ofis_alacagi > 0
-                                ? "text-red-600"
-                                : "text-green-600",
-                              "font-semibold"
-                            )}
-                          >
-                            ₺{magaza.kalan_ofis_alacagi.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-center gap-1">
-                              {magaza.onaylanan_kalem_sayisi > 0 && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-green-600 border-green-100"
-                                >
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  {magaza.onaylanan_kalem_sayisi}
-                                </Badge>
+                            <TableCell></TableCell>{" "}
+                            {/* Empty cell for expand button column */}
+                            <TableCell className="pl-8 font-medium text-gray-700">
+                              {magaza.magaza_adi}
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.toplam_satis_tutari.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.bekleyen_satis_tutari.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.iptal_satis_tutari.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.toplam_acente_komisyon_tutari.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₺
+                              {magaza.bekleyen_acente_komisyon_tutari.toFixed(
+                                2
                               )}
-                              {magaza.bekleyen_kalem_sayisi > 0 && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-orange-600 border-orange-100"
-                                >
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  {magaza.bekleyen_kalem_sayisi}
-                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.toplam_acente_tahsilat.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.toplam_ofis_komisyon_tutari.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              ₺{magaza.toplam_ofis_tahsilat.toFixed(2)}
+                            </TableCell>
+                            <TableCell
+                              className={cn(
+                                magaza.kalan_acente_alacagi > 0
+                                  ? "text-red-600"
+                                  : "text-green-600",
+                                "font-semibold"
                               )}
-                              {magaza.iptal_kalem_sayisi > 0 && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-red-600 border-red-100"
-                                >
-                                  <XCircle className="w-3 h-3 mr-1" />
-                                  {magaza.iptal_kalem_sayisi}
-                                </Badge>
-                              )}
-                              {magaza.toplam_kalem_sayisi === 0 && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-gray-600 border-gray-500/10"
-                                >
-                                  Veri Yok
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                router.push(
-                                  `/dashboard/muhasebe/${magaza.magaza_id}`
-                                )
-                              }
                             >
-                              Detay
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </React.Fragment>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                              ₺{magaza.kalan_acente_alacagi.toFixed(2)}
+                            </TableCell>
+                            <TableCell
+                              className={cn(
+                                magaza.kalan_ofis_alacagi > 0
+                                  ? "text-red-600"
+                                  : "text-green-600",
+                                "font-semibold"
+                              )}
+                            >
+                              ₺{magaza.kalan_ofis_alacagi.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-center gap-1">
+                                {magaza.onaylanan_kalem_sayisi > 0 && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-600 border-green-100"
+                                  >
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    {magaza.onaylanan_kalem_sayisi}
+                                  </Badge>
+                                )}
+                                {magaza.bekleyen_kalem_sayisi > 0 && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-orange-600 border-orange-100"
+                                  >
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    {magaza.bekleyen_kalem_sayisi}
+                                  </Badge>
+                                )}
+                                {magaza.iptal_kalem_sayisi > 0 && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-red-600 border-red-100"
+                                  >
+                                    <XCircle className="w-3 h-3 mr-1" />
+                                    {magaza.iptal_kalem_sayisi}
+                                  </Badge>
+                                )}
+                                {magaza.toplam_kalem_sayisi === 0 && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-gray-600 border-gray-500/10"
+                                  >
+                                    Veri Yok
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  router.push(
+                                    `/dashboard/muhasebe/${magaza.magaza_id}`
+                                  )
+                                }
+                              >
+                                Detay
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </React.Fragment>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>

@@ -1542,26 +1542,31 @@ urun_adi
 
   return (
     <div>
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Satışlar</h1>
-          <p className="text-gray-600">Mağaza ürün bazında satışları yönetin</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Satışlar
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Mağaza ürün bazında satışları yönetin
+          </p>
           {userRole === "standart" && (
-            <p className="text-sm text-orange-600 mt-1">
+            <p className="text-xs sm:text-sm text-orange-600 mt-1">
               💡 Mağaza bildirimlerinde fiyat bilgisi gizlidir. Rehber
               bildirimlerinde fiyat düzenleyebilirsiniz.
             </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
+            className="w-full sm:w-auto"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filtrele
           </Button>
-          <Button onClick={handleAdd}>
+          <Button onClick={handleAdd} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Yeni Satış
           </Button>
@@ -1581,7 +1586,7 @@ urun_adi
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
               <div>
                 <Label>Başlangıç Tarihi</Label>
                 <Input
@@ -1784,38 +1789,41 @@ urun_adi
             {groupedSatislar.map((group, groupIndex) => (
               <Card key={groupIndex} className="border-l-4 border-l-blue-500">
                 <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                  <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span className="font-semibold">
+                        <span className="font-semibold text-sm sm:text-base">
                           {group.date
                             ? new Date(group.date).toLocaleDateString("tr-TR")
                             : "-"}
                         </span>
-                        <Badge variant="outline">{group.tur}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {group.tur}
+                        </Badge>
                         {/* Durum rozeti artık sadece adminler için görünür */}
                         {userRole === "admin" && getDurumBadge(group)}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-gray-600">
                         <span className="font-medium">{group.firma}</span> -{" "}
                         {group.magaza}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        Operatör: {group.operator} | Rehber: {group.rehber} |
-                        Grup PAX: {group.grup_pax} | Mağaza PAX:{" "}
-                        {group.magaza_pax}
+                      <div className="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2">
+                        <span>Operatör: {group.operator}</span>
+                        <span>Rehber: {group.rehber}</span>
+                        <span>Grup PAX: {group.grup_pax}</span>
+                        <span>Mağaza PAX: {group.magaza_pax}</span>
                       </div>
                     </div>
                     {userRole === "admin" && (
-                      <div className="text-right space-y-1">
+                      <div className="text-right space-y-1 lg:min-w-[150px]">
                         <div className="text-lg font-bold text-green-600">
                           ₺{group.magaza_toplam.toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs sm:text-sm text-gray-500">
                           Mağaza Toplam Tutar
                         </div>
-                        {group.magaza_toplam > 0 || group.rehber_toplam > 0 ? ( // Sadece biri bile varsa göster
+                        {group.magaza_toplam > 0 || group.rehber_toplam > 0 ? (
                           <div className="text-xs text-gray-400">
                             M: ₺{group.magaza_toplam.toFixed(2)} | R: ₺
                             {group.rehber_toplam.toFixed(2)}
@@ -1826,193 +1834,226 @@ urun_adi
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ürün</TableHead>
-                        {(userRole === "admin" || userRole === "standart") && (
-                          <TableHead>Bildirim</TableHead>
-                        )}
-                        <TableHead>Adet</TableHead>
-                        {(userRole === "admin" || userRole === "standart") && (
-                          <TableHead>Birim Fiyat</TableHead>
-                        )}
-                        {(userRole === "admin" || userRole === "standart") && (
-                          <TableHead>Toplam</TableHead>
-                        )}
-                        <TableHead>Durum</TableHead>
-                        <TableHead>İşlemler</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {/* Mağaza Satışları */}
-                      {group.magaza_satislari.map((satis, itemIndex) => (
-                        <TableRow key={`magaza-${satis.satis_id}-${itemIndex}`}>
-                          <TableCell className="font-medium">
-                            {satis.urun_adi || "-"}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[120px]">Ürün</TableHead>
                           {(userRole === "admin" ||
                             userRole === "standart") && (
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-50 text-blue-700"
-                              >
-                                <Store className="w-3 h-3 mr-1" />
-                                Mağaza
-                              </Badge>
-                            </TableCell>
+                            <TableHead className="min-w-[100px]">
+                              Bildirim
+                            </TableHead>
                           )}
-                          <TableCell>{satis.adet || 0}</TableCell>
-                          {userRole === "admin" && (
-                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
-                          )}
-                          {userRole === "standart" && (
-                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
-                          )}
-                          {userRole === "admin" && (
-                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
-                          )}
-                          {userRole === "standart" && (
-                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
-                          )}
-                          <TableCell>
-                            {satis.status === "onaylandı" && (
-                              <Badge
-                                variant="default"
-                                className="bg-green-100 text-green-800"
-                              >
-                                Onaylandı
-                              </Badge>
-                            )}
-                            {satis.status === "beklemede" && (
-                              <Badge variant="secondary">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Beklemede
-                              </Badge>
-                            )}
-                            {satis.status === "iptal" && (
-                              <Badge variant="destructive">İptal</Badge>
-                            )}
-                            {!satis.status && "-"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(satis)}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Düzenle
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDelete(satis.satis_id)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Sil
-                              </Button>
-                              {userRole === "admin" && (
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => showOranlar(satis)}
-                                >
-                                  <BarChart className="w-4 h-4 mr-2" />
-                                  Oranlar
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {/* Rehber Satışları */}
-                      {group.rehber_satislari.map((satis, itemIndex) => (
-                        <TableRow key={`rehber-${satis.satis_id}-${itemIndex}`}>
-                          <TableCell className="font-medium">
-                            {satis.urun_adi || "-"}
-                          </TableCell>
+                          <TableHead className="min-w-[60px]">Adet</TableHead>
                           {(userRole === "admin" ||
                             userRole === "standart") && (
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className="bg-orange-50 text-orange-700"
-                              >
-                                <Phone className="w-3 h-3 mr-1" />
-                                Rehber
-                              </Badge>
-                            </TableCell>
+                            <TableHead className="min-w-[100px]">
+                              Birim Fiyat
+                            </TableHead>
                           )}
-                          <TableCell>{satis.adet || 0}</TableCell>
-                          {userRole === "admin" && (
-                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                          {(userRole === "admin" ||
+                            userRole === "standart") && (
+                            <TableHead className="min-w-[100px]">
+                              Toplam
+                            </TableHead>
                           )}
-                          {userRole === "standart" && (
-                            <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
-                          )}
-                          {userRole === "admin" && (
-                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
-                          )}
-                          {userRole === "standart" && (
-                            <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
-                          )}
-                          <TableCell>
-                            {satis.status === "onaylandı" && (
-                              <Badge
-                                variant="default"
-                                className="bg-green-100 text-green-800"
-                              >
-                                Onaylandı
-                              </Badge>
-                            )}
-                            {satis.status === "beklemede" && (
-                              <Badge variant="secondary">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Beklemede
-                              </Badge>
-                            )}
-                            {satis.status === "iptal" && (
-                              <Badge variant="destructive">İptal</Badge>
-                            )}
-                            {!satis.status && "-"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(satis)}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Düzenle
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDelete(satis.satis_id)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Sil
-                              </Button>
-                              {userRole === "admin" && (
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => showOranlar(satis)}
-                                >
-                                  <BarChart className="w-4 h-4 mr-2" />
-                                  Oranlar
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
+                          <TableHead className="min-w-[100px]">Durum</TableHead>
+                          <TableHead className="min-w-[200px]">
+                            İşlemler
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {/* Mağaza Satışları */}
+                        {group.magaza_satislari.map((satis, itemIndex) => (
+                          <TableRow
+                            key={`magaza-${satis.satis_id}-${itemIndex}`}
+                          >
+                            <TableCell className="font-medium">
+                              {satis.urun_adi || "-"}
+                            </TableCell>
+                            {(userRole === "admin" ||
+                              userRole === "standart") && (
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className="bg-blue-50 text-blue-700 text-xs"
+                                >
+                                  <Store className="w-3 h-3 mr-1" />
+                                  Mağaza
+                                </Badge>
+                              </TableCell>
+                            )}
+                            <TableCell>{satis.adet || 0}</TableCell>
+                            {userRole === "admin" && (
+                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                            )}
+                            {userRole === "admin" && (
+                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                            )}
+                            <TableCell>
+                              {satis.status === "onaylandı" && (
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-100 text-green-800 text-xs"
+                                >
+                                  Onaylandı
+                                </Badge>
+                              )}
+                              {satis.status === "beklemede" && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  Beklemede
+                                </Badge>
+                              )}
+                              {satis.status === "iptal" && (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  İptal
+                                </Badge>
+                              )}
+                              {!satis.status && "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(satis)}
+                                  className="text-xs"
+                                >
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                  Düzenle
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDelete(satis.satis_id)}
+                                  className="text-xs"
+                                >
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                  Sil
+                                </Button>
+                                {userRole === "admin" && (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => showOranlar(satis)}
+                                    className="text-xs"
+                                  >
+                                    <BarChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    Oranlar
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {/* Rehber Satışları */}
+                        {group.rehber_satislari.map((satis, itemIndex) => (
+                          <TableRow
+                            key={`rehber-${satis.satis_id}-${itemIndex}`}
+                          >
+                            <TableCell className="font-medium">
+                              {satis.urun_adi || "-"}
+                            </TableCell>
+                            {(userRole === "admin" ||
+                              userRole === "standart") && (
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className="bg-orange-50 text-orange-700 text-xs"
+                                >
+                                  <Phone className="w-3 h-3 mr-1" />
+                                  Rehber
+                                </Badge>
+                              </TableCell>
+                            )}
+                            <TableCell>{satis.adet || 0}</TableCell>
+                            {userRole === "admin" && (
+                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                            )}
+                            {userRole === "admin" && (
+                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                            )}
+                            <TableCell>
+                              {satis.status === "onaylandı" && (
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-100 text-green-800 text-xs"
+                                >
+                                  Onaylandı
+                                </Badge>
+                              )}
+                              {satis.status === "beklemede" && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  Beklemede
+                                </Badge>
+                              )}
+                              {satis.status === "iptal" && (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  İptal
+                                </Badge>
+                              )}
+                              {!satis.status && "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(satis)}
+                                  className="text-xs"
+                                >
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                  Düzenle
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDelete(satis.satis_id)}
+                                  className="text-xs"
+                                >
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                  Sil
+                                </Button>
+                                {userRole === "admin" && (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => showOranlar(satis)}
+                                    className="text-xs"
+                                  >
+                                    <BarChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    Oranlar
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -2022,80 +2063,88 @@ urun_adi
 
       {/* Oranlar Dialog */}
       <Dialog open={isOranlarDialogOpen} onOpenChange={setIsOranlarDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Komisyon Oranları</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">
+              Komisyon Oranları
+            </DialogTitle>
+            <DialogDescription className="text-sm">
               Seçili satış kaleminin komisyon oranlarını görüntüleyin.
             </DialogDescription>
           </DialogHeader>
           {selectedSatis && (
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <Label>Acente Komisyonu</Label>
+                  <Label className="text-sm">Acente Komisyonu</Label>
                   <Input
                     type="text"
                     value={selectedSatis.acente_komisyonu || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Rehber Komisyonu</Label>
+                  <Label className="text-sm">Rehber Komisyonu</Label>
                   <Input
                     type="text"
                     value={selectedSatis.rehber_komisyonu || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Kaptan Komisyonu</Label>
+                  <Label className="text-sm">Kaptan Komisyonu</Label>
                   <Input
                     type="text"
                     value={selectedSatis.kaptan_komisyonu || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
-                {/* Yeni eklendi */}
                 <div>
-                  <Label>Ofis Komisyonu</Label>
+                  <Label className="text-sm">Ofis Komisyonu</Label>
                   <Input
                     type="text"
                     value={selectedSatis.ofis_komisyonu || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Acente Komisyon Tutarı</Label>
+                  <Label className="text-sm">Acente Komisyon Tutarı</Label>
                   <Input
                     type="text"
                     value={selectedSatis.acente_komisyon_tutari || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Rehber Komisyon Tutarı</Label>
+                  <Label className="text-sm">Rehber Komisyon Tutarı</Label>
                   <Input
                     type="text"
                     value={selectedSatis.rehber_komisyon_tutari || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Kaptan Komisyon Tutarı</Label>
+                  <Label className="text-sm">Kaptan Komisyon Tutarı</Label>
                   <Input
                     type="text"
                     value={selectedSatis.kaptan_komisyon_tutari || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
-                {/* Yeni eklendi */}
                 <div>
-                  <Label>Ofis Komisyon Tutarı</Label>
+                  <Label className="text-sm">Ofis Komisyon Tutarı</Label>
                   <Input
                     type="text"
                     value={selectedSatis.ofis_komisyon_tutari || "0"}
                     disabled
+                    className="text-sm"
                   />
                 </div>
               </div>
@@ -2106,19 +2155,19 @@ urun_adi
 
       {/* Satış Ekleme/Düzenleme Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={handleMainDialogClose}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
               {editingSatis ? "Satış Düzenle" : "Yeni Satış Ekle"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Bu formu kullanarak mağaza satışlarını ekleyebilir veya
               düzenleyebilirsiniz.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="operator_id">Operatör</Label>
                   <div className="flex items-center space-x-2">
@@ -2331,12 +2380,13 @@ urun_adi
 
               {/* Satış Ürünleri */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label>Satış Ürünleri</Label>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <Label className="text-sm sm:text-base">Satış Ürünleri</Label>
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={addUrunRow}
+                    className="w-full sm:w-auto text-sm"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Ürün Ekle
@@ -2345,10 +2395,13 @@ urun_adi
                 {satisUrunleri.map((urun, index) => (
                   <div
                     key={index}
-                    className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-center p-4 border rounded-lg"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-center p-4 border rounded-lg"
                   >
-                    <div>
-                      <Label htmlFor={`urun_id_${index}`}>Ürün</Label>
+                    {/* Ürün seçimi */}
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <Label htmlFor={`urun_id_${index}`} className="text-sm">
+                        Ürün
+                      </Label>
                       <div className="flex items-center space-x-2">
                         <Select
                           id={`urun_id_${index}`}
@@ -2358,12 +2411,16 @@ urun_adi
                             handleUrunSelection(index, value);
                           }}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="text-sm">
                             <SelectValue placeholder="Ürün Seçin" />
                           </SelectTrigger>
                           <SelectContent>
                             {urunler.map((urun) => (
-                              <SelectItem key={urun.id} value={urun.id}>
+                              <SelectItem
+                                key={urun.id}
+                                value={urun.id}
+                                className="text-sm"
+                              >
                                 {urun.urun_adi}
                               </SelectItem>
                             ))}
@@ -2374,13 +2431,18 @@ urun_adi
                           variant="secondary"
                           size="icon"
                           onClick={() => setIsAddUrunDialogOpen(true)}
+                          className="shrink-0"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
+
+                    {/* Adet */}
                     <div>
-                      <Label htmlFor={`adet_${index}`}>Adet</Label>
+                      <Label htmlFor={`adet_${index}`} className="text-sm">
+                        Adet
+                      </Label>
                       <Input
                         type="number"
                         id={`adet_${index}`}
@@ -2388,13 +2450,19 @@ urun_adi
                         onChange={(e) =>
                           updateUrunRow(index, "adet", e.target.value)
                         }
+                        className="text-sm"
                       />
                     </div>
+
+                    {/* Birim Fiyat */}
                     {(userRole === "admin" ||
                       (userRole === "standart" &&
                         urun.bildirim_tipi === "rehber")) && (
                       <div>
-                        <Label htmlFor={`birim_fiyat_${index}`}>
+                        <Label
+                          htmlFor={`birim_fiyat_${index}`}
+                          className="text-sm"
+                        >
                           Birim Fiyat
                         </Label>
                         <Input
@@ -2404,11 +2472,17 @@ urun_adi
                           onChange={(e) =>
                             updateUrunRow(index, "birim_fiyat", e.target.value)
                           }
+                          className="text-sm"
                         />
                       </div>
                     )}
+
+                    {/* Bildirim Tipi */}
                     <div>
-                      <Label htmlFor={`bildirim_tipi_${index}`}>
+                      <Label
+                        htmlFor={`bildirim_tipi_${index}`}
+                        className="text-sm"
+                      >
                         Bildirim Tipi
                       </Label>
                       <Select
@@ -2418,34 +2492,50 @@ urun_adi
                         }
                         disabled={userRole === "standart"}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="magaza">Mağaza</SelectItem>
-                          <SelectItem value="rehber">Rehber</SelectItem>
+                          <SelectItem value="magaza" className="text-sm">
+                            Mağaza
+                          </SelectItem>
+                          <SelectItem value="rehber" className="text-sm">
+                            Rehber
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Durum */}
                     <div>
-                      <Label htmlFor={`status_${index}`}>Durum</Label>
+                      <Label htmlFor={`status_${index}`} className="text-sm">
+                        Durum
+                      </Label>
                       <Select
                         value={urun.status}
                         onValueChange={(value) =>
                           updateUrunRow(index, "status", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="onaylandı">Onaylandı</SelectItem>
-                          <SelectItem value="beklemede">Beklemede</SelectItem>
-                          <SelectItem value="iptal">İptal</SelectItem>
+                          <SelectItem value="onaylandı" className="text-sm">
+                            Onaylandı
+                          </SelectItem>
+                          <SelectItem value="beklemede" className="text-sm">
+                            Beklemede
+                          </SelectItem>
+                          <SelectItem value="iptal" className="text-sm">
+                            İptal
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-center space-x-2">
+
+                    {/* İşlem Butonları */}
+                    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
                       {userRole === "admin" && (
                         <Button
                           type="button"
@@ -2458,11 +2548,12 @@ urun_adi
                               !urun.showCommissions
                             )
                           }
+                          className="w-full sm:w-auto text-xs"
                         >
                           {urun.showCommissions ? (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                           )}
                         </Button>
                       )}
@@ -2472,19 +2563,23 @@ urun_adi
                           variant="destructive"
                           size="sm"
                           onClick={() => removeUrunRow(index)}
+                          className="w-full sm:w-auto text-xs"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       )}
                     </div>
 
-                    {/* Komisyon Oranları - Sadece admin için ve showCommissions true ise */}
+                    {/* Komisyon Oranları - Responsive grid */}
                     {userRole === "admin" &&
                       urun.showCommissions &&
                       urun.bildirim_tipi === "magaza" && (
-                        <div className="col-span-full grid grid-cols-4 gap-4 mt-2 p-3 bg-gray-50 rounded">
+                        <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2 p-3 bg-gray-50 rounded">
                           <div>
-                            <Label htmlFor={`acente_komisyonu_${index}`}>
+                            <Label
+                              htmlFor={`acente_komisyonu_${index}`}
+                              className="text-sm"
+                            >
                               Acente Komisyonu (%)
                             </Label>
                             <Input
@@ -2499,10 +2594,14 @@ urun_adi
                                 )
                               }
                               placeholder="0"
+                              className="text-sm"
                             />
                           </div>
                           <div>
-                            <Label htmlFor={`rehber_komisyonu_${index}`}>
+                            <Label
+                              htmlFor={`rehber_komisyonu_${index}`}
+                              className="text-sm"
+                            >
                               Rehber Komisyonu (%)
                             </Label>
                             <Input
@@ -2517,10 +2616,14 @@ urun_adi
                                 )
                               }
                               placeholder="0"
+                              className="text-sm"
                             />
                           </div>
                           <div>
-                            <Label htmlFor={`kaptan_komisyonu_${index}`}>
+                            <Label
+                              htmlFor={`kaptan_komisyonu_${index}`}
+                              className="text-sm"
+                            >
                               Kaptan Komisyonu (%)
                             </Label>
                             <Input
@@ -2535,10 +2638,14 @@ urun_adi
                                 )
                               }
                               placeholder="0"
+                              className="text-sm"
                             />
                           </div>
                           <div>
-                            <Label htmlFor={`ofis_komisyonu_${index}`}>
+                            <Label
+                              htmlFor={`ofis_komisyonu_${index}`}
+                              className="text-sm"
+                            >
                               Ofis Komisyonu (%)
                             </Label>
                             <Input
@@ -2553,6 +2660,7 @@ urun_adi
                                 )
                               }
                               placeholder="0"
+                              className="text-sm"
                             />
                           </div>
                         </div>
@@ -2560,7 +2668,10 @@ urun_adi
 
                     {/* Açıklama alanı */}
                     <div className="col-span-full">
-                      <Label htmlFor={`satis_aciklamasi_${index}`}>
+                      <Label
+                        htmlFor={`satis_aciklamasi_${index}`}
+                        className="text-sm"
+                      >
                         Satış Açıklaması
                       </Label>
                       <Textarea
@@ -2575,6 +2686,7 @@ urun_adi
                         }
                         placeholder="Satış ile ilgili açıklama..."
                         rows={2}
+                        className="text-sm"
                       />
                     </div>
                   </div>
@@ -2582,15 +2694,16 @@ urun_adi
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
+                className="w-full sm:w-auto"
               >
                 İptal
               </Button>
-              <Button type="submit">
+              <Button type="submit" className="w-full sm:w-auto">
                 {editingSatis ? "Güncelle" : "Kaydet"}
               </Button>
             </div>
@@ -2603,19 +2716,29 @@ urun_adi
         open={isConfirmCloseDialogOpen}
         onOpenChange={setIsConfirmCloseDialogOpen}
       >
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md">
           <DialogHeader>
-            <DialogTitle>Kaydedilmemiş Değişiklikler</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">
+              Kaydedilmemiş Değişiklikler
+            </DialogTitle>
+            <DialogDescription className="text-sm">
               Formda kaydedilmemiş değişiklikler var. Bu değişiklikleri atmak
               istediğinizden emin misiniz?
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={cancelDiscardChanges}>
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+            <Button
+              variant="outline"
+              onClick={cancelDiscardChanges}
+              className="w-full sm:w-auto bg-transparent"
+            >
               İptal
             </Button>
-            <Button variant="destructive" onClick={confirmDiscardChanges}>
+            <Button
+              variant="destructive"
+              onClick={confirmDiscardChanges}
+              className="w-full sm:w-auto"
+            >
               Değişiklikleri At
             </Button>
           </div>

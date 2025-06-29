@@ -33,8 +33,8 @@ interface SatisDetay {
   rehber_bildirimi_tutar: number;
   magaza_bildirimi_tarihi: string | null;
   rehber_bildirimi_tarihi: string | null;
-  magaza_bildirimi_notu: string | null; // This now comes from satis_aciklamasi in bildirim_karsilastirma view
-  rehber_bildirimi_notu: string | null; // This now comes from satis_aciklamasi in bildirim_karsilastirma view
+  magaza_bildirimi_notu: string | null;
+  rehber_bildirimi_notu: string | null;
   tutar_farki: number;
   durum: string;
 }
@@ -120,13 +120,13 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-4 px-4 sm:py-10">
         <Card>
           <CardContent className="pt-6">
             <div className="flex justify-center items-center h-40">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-2">Yükleniyor...</p>
+                <p className="mt-2 text-sm">Yükleniyor...</p>
               </div>
             </div>
           </CardContent>
@@ -137,13 +137,18 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
 
   if (error) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-4 px-4 sm:py-10">
         <Card>
           <CardContent className="pt-6">
             <div className="bg-red-50 border-red-200 border p-4 rounded-md">
-              <h3 className="text-red-800 font-medium">Hata</h3>
-              <p className="text-red-600">{error}</p>
-              <Button onClick={fetchSatisDetay} className="mt-4">
+              <h3 className="text-red-800 font-medium text-sm sm:text-base">
+                Hata
+              </h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+              <Button
+                onClick={fetchSatisDetay}
+                className="mt-4 w-full sm:w-auto text-sm"
+              >
                 Yeniden Dene
               </Button>
             </div>
@@ -155,17 +160,19 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
 
   if (!satis) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="container mx-auto py-4 px-4 sm:py-10">
         <Card>
           <CardContent className="pt-6">
             <div className="bg-yellow-50 border-yellow-200 border p-4 rounded-md">
-              <h3 className="text-yellow-800 font-medium">Satış Bulunamadı</h3>
-              <p className="text-yellow-600">
+              <h3 className="text-yellow-800 font-medium text-sm sm:text-base">
+                Satış Bulunamadı
+              </h3>
+              <p className="text-yellow-600 text-sm mt-1">
                 Bu ID ile bir satış kaydı bulunamadı.
               </p>
               <Button
                 onClick={() => router.push("/dashboard/satislar")}
-                className="mt-4"
+                className="mt-4 w-full sm:w-auto text-sm"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Satışlar Listesine Dön
@@ -178,57 +185,61 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-4 px-4 sm:py-10">
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <CardTitle>Satış #{satis.id}</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">
+                Satış #{satis.id}
+              </CardTitle>
+              <CardDescription className="text-sm">
                 {new Date(satis.satis_tarihi).toLocaleDateString("tr-TR")}{" "}
                 tarihli satış detayları
               </CardDescription>
             </div>
-            <div>{getDurumBadge(satis.durum)}</div>
+            <div className="w-full sm:w-auto">{getDurumBadge(satis.durum)}</div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Genel Bilgiler */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Genel Bilgiler</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  Genel Bilgiler
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <dl className="space-y-2">
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Firma:</dt>
-                    <dd>{satis.firma_adi}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Firma:</dt>
+                    <dd className="text-sm">{satis.firma_adi}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Mağaza:</dt>
-                    <dd>{satis.magaza_adi}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Mağaza:</dt>
+                    <dd className="text-sm">{satis.magaza_adi}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Operatör:</dt>
-                    <dd>{satis.operator_adi}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Operatör:</dt>
+                    <dd className="text-sm">{satis.operator_adi}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Rehber:</dt>
-                    <dd>{satis.rehber_adi}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Rehber:</dt>
+                    <dd className="text-sm">{satis.rehber_adi}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Tur:</dt>
-                    <dd>{satis.tur}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Tur:</dt>
+                    <dd className="text-sm">{satis.tur}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Grup PAX:</dt>
-                    <dd>{satis.grup_pax}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Grup PAX:</dt>
+                    <dd className="text-sm">{satis.grup_pax}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <dt className="font-medium">Mağaza PAX:</dt>
-                    <dd>{satis.magaza_pax}</dd>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <dt className="font-medium text-sm">Mağaza PAX:</dt>
+                    <dd className="text-sm">{satis.magaza_pax}</dd>
                   </div>
                 </dl>
               </CardContent>
@@ -237,28 +248,30 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
             {/* Bildirim Karşılaştırma */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">
+                <CardTitle className="text-base sm:text-lg">
                   Bildirim Karşılaştırma
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Mağaza Bildirimi */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="font-medium mb-2">Mağaza Bildirimi</h3>
+                  <div className="border rounded-md p-3 sm:p-4">
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">
+                      Mağaza Bildirimi
+                    </h3>
                     <dl className="space-y-2">
-                      <div className="flex justify-between">
-                        <dt>Tutar:</dt>
-                        <dd className="font-bold">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <dt className="text-sm">Tutar:</dt>
+                        <dd className="font-bold text-sm">
                           {satis.magaza_bildirimi_tutar?.toLocaleString(
                             "tr-TR"
                           )}{" "}
                           €
                         </dd>
                       </div>
-                      <div className="flex justify-between">
-                        <dt>Tarih:</dt>
-                        <dd>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <dt className="text-sm">Tarih:</dt>
+                        <dd className="text-sm">
                           {satis.magaza_bildirimi_tarihi
                             ? new Date(
                                 satis.magaza_bildirimi_tarihi
@@ -268,8 +281,8 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
                       </div>
                       {satis.magaza_bildirimi_notu && (
                         <div className="mt-2">
-                          <dt className="font-medium">Not:</dt>
-                          <dd className="text-sm mt-1 bg-gray-50 p-2 rounded">
+                          <dt className="font-medium text-sm">Not:</dt>
+                          <dd className="text-xs sm:text-sm mt-1 bg-gray-50 p-2 rounded break-words">
                             {satis.magaza_bildirimi_notu}
                           </dd>
                         </div>
@@ -278,21 +291,23 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
                   </div>
 
                   {/* Rehber Bildirimi */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="font-medium mb-2">Rehber Bildirimi</h3>
+                  <div className="border rounded-md p-3 sm:p-4">
+                    <h3 className="font-medium mb-2 text-sm sm:text-base">
+                      Rehber Bildirimi
+                    </h3>
                     <dl className="space-y-2">
-                      <div className="flex justify-between">
-                        <dt>Tutar:</dt>
-                        <dd className="font-bold">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <dt className="text-sm">Tutar:</dt>
+                        <dd className="font-bold text-sm">
                           {satis.rehber_bildirimi_tutar?.toLocaleString(
                             "tr-TR"
                           ) || "-"}{" "}
                           €
                         </dd>
                       </div>
-                      <div className="flex justify-between">
-                        <dt>Tarih:</dt>
-                        <dd>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <dt className="text-sm">Tarih:</dt>
+                        <dd className="text-sm">
                           {satis.rehber_bildirimi_tarihi
                             ? new Date(
                                 satis.rehber_bildirimi_tarihi
@@ -302,8 +317,8 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
                       </div>
                       {satis.rehber_bildirimi_notu && (
                         <div className="mt-2">
-                          <dt className="font-medium">Not:</dt>
-                          <dd className="text-sm mt-1 bg-gray-50 p-2 rounded">
+                          <dt className="font-medium text-sm">Not:</dt>
+                          <dd className="text-xs sm:text-sm mt-1 bg-gray-50 p-2 rounded break-words">
                             {satis.rehber_bildirimi_notu}
                           </dd>
                         </div>
@@ -315,9 +330,9 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
                 {/* Fark Bilgisi */}
                 {satis.durum === "UYUMSUZ" && (
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">Tutar Farkı:</span>
-                      <span className="font-bold text-red-600">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                      <span className="font-medium text-sm">Tutar Farkı:</span>
+                      <span className="font-bold text-red-600 text-sm">
                         {satis.tutar_farki?.toLocaleString("tr-TR")} €
                       </span>
                     </div>
@@ -329,7 +344,10 @@ export default function SatisDetayPage({ params }: { params: { id: string } }) {
         </CardContent>
 
         <CardFooter>
-          <Button onClick={() => router.push("/dashboard/satislar")}>
+          <Button
+            onClick={() => router.push("/dashboard/satislar")}
+            className="w-full sm:w-auto text-sm"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Satışlar Listesine Dön
           </Button>
