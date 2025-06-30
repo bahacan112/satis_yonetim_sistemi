@@ -1,55 +1,61 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
-import { useAuth } from "@/contexts/auth-context"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-  const { user } = useAuth()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
 
   // Eğer kullanıcı zaten giriş yapmışsa dashboard'a yönlendir
   useEffect(() => {
     if (user) {
-      router.push("/dashboard")
+      router.push("/dashboard");
     }
-  }, [user, router])
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       if (data.user) {
         // Auth context otomatik olarak güncellenecek ve useEffect ile yönlendirme yapılacak
-        console.log("Login successful, waiting for auth context update...")
+        console.log("Login successful, waiting for auth context update...");
       }
     } catch (error: any) {
-      console.error("Login error:", error)
-      setError(error.message || "Giriş yapılırken bir hata oluştu")
-      setLoading(false)
+      console.error("Login error:", error);
+      setError(error.message || "Giriş yapılırken bir hata oluştu");
+      setLoading(false);
     }
-  }
+  };
 
   // Eğer kullanıcı zaten giriş yapmışsa loading göster
   if (user) {
@@ -64,7 +70,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -116,15 +122,15 @@ export default function LoginPage() {
           </form>
 
           {/* Debug bilgileri */}
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+          {/*      <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
             <p>
               <strong>Debug:</strong>
             </p>
             <p>Loading: {loading ? "Evet" : "Hayır"}</p>
             <p>User: {user ? "Giriş yapılmış" : "Giriş yapılmamış"}</p>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
