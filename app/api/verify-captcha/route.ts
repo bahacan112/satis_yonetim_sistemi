@@ -5,21 +5,39 @@ export async function POST(request: NextRequest) {
     const { token } = await request.json();
 
     if (!token) {
+      console.error("reCAPTCHA verification failed: No token provided");
       return NextResponse.json(
-        { success: false, error: "CAPTCHA token gerekli" },
+        {
+          success: false,
+          error: "CAPTCHA token is required",
+        },
         { status: 400 }
       );
     }
 
-    // Test environment için Google'ın test secret key'i
-    // Production'da gerçek secret key kullanın
-    const secretKey =
-      process.env.RECAPTCHA_SECRET_KEY ||
-      "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe";
+    // Development ortamında her zaman başarılı dön
+    if (process.env.NODE_ENV === "development") {
+      console.log("Development mode: CAPTCHA verification bypassed");
+      return NextResponse.json({ success: true });
+    }
 
-    const verificationURL = "https://www.google.com/recaptcha/api/siteverify";
+    // Production ortamında Google reCAPTCHA API'sini kullan
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    if (!secretKey) {
+      console.error("RECAPTCHA_SECRET_KEY environment variable is not set");
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Server configuration error",
+        },
+        { status: 500 }
+      );
+    }
 
-    const verificationResponse = await fetch(verificationURL, {
+    console.log("Verifying reCAPTCHA with Google API...");
+
+    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify`;
+    const response = await fetch(verifyUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -27,41 +45,35 @@ export async function POST(request: NextRequest) {
       body: `secret=${secretKey}&response=${token}`,
     });
 
-    const verificationData = await verificationResponse.json();
+    const data = await response.json();
 
-    if (verificationData.success) {
-      // Başarılı CAPTCHA doğrulaması
-      console.log("CAPTCHA verification successful:", {
-        timestamp: new Date().toISOString(),
-        score: verificationData.score,
-        action: verificationData.action,
-      });
+    console.log("Google reCAPTCHA API response:", {
+      success: data.success,
+      errorCodes: data["error-codes"],
+      hostname: data.hostname,
+      challengeTs: data.challenge_ts,
+    });
 
-      return NextResponse.json({
-        success: true,
-        message: "CAPTCHA doğrulaması başarılı",
-      });
+    if (data.success) {
+      return NextResponse.json({ success: true });
     } else {
-      // Başarısız CAPTCHA doğrulaması
-      console.error("CAPTCHA verification failed:", {
-        timestamp: new Date().toISOString(),
-        errors: verificationData["error-codes"],
-      });
-
+      console.error("reCAPTCHA verification failed:", data["error-codes"]);
       return NextResponse.json(
         {
           success: false,
-          error: "CAPTCHA doğrulaması başarısız",
-          details: verificationData["error-codes"],
+          error: "CAPTCHA verification failed",
+          details: data["error-codes"],
         },
         { status: 400 }
       );
     }
   } catch (error) {
     console.error("CAPTCHA verification error:", error);
-
     return NextResponse.json(
-      { success: false, error: "CAPTCHA doğrulama hatası" },
+      {
+        success: false,
+        error: "Internal server error",
+      },
       { status: 500 }
     );
   }
