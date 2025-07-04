@@ -51,7 +51,7 @@ export function BireyselRaporStatistics({
     isTotalCard = false
   ) => {
     if (metricType === "totalAmount" && userRole === "admin") {
-      return `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
+      return `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
     } else if (metricType === "paxAverage") {
       return value.toFixed(2); // Always format as decimal for average
     }

@@ -593,7 +593,7 @@ export default function DetailedReportPage({
     const formatter = (value: any, name: string) => {
       if (selectedMetric === "totalAmount") {
         return [
-          `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
+          `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
           mainMetricLabel,
         ];
       } else if (selectedMetric === "paxAverage") {
@@ -705,7 +705,7 @@ export default function DetailedReportPage({
               <Tooltip
                 formatter={(value: any) => [
                   selectedMetric === "totalAmount"
-                    ? `₺${value.toLocaleString("tr-TR", {
+                    ? `€${value.toLocaleString("tr-TR", {
                         minimumFractionDigits: 2,
                       })}`
                     : selectedMetric === "paxAverage"
@@ -891,17 +891,17 @@ export default function DetailedReportPage({
                         </TableHead>
                         {userRole === "admin" && (
                           <TableHead className="text-right">
-                            İptal Tutar (₺)
+                            İptal Tutar (€)
                           </TableHead>
                         )}
                         {userRole === "admin" && (
                           <TableHead className="text-right">
-                            Toplam Tutar (₺)
+                            Toplam Tutar (€)
                           </TableHead>
                         )}
                         {userRole === "admin" && (
                           <TableHead className="text-right">
-                            Pax Ortalaması (₺)
+                            Pax Ortalaması (€)
                           </TableHead>
                         )}
                       </TableRow>
@@ -926,7 +926,7 @@ export default function DetailedReportPage({
                           </TableCell>
                           {userRole === "admin" && (
                             <TableCell className="text-right">
-                              ₺
+                              €
                               {getAmountsByStatus(
                                 sale,
                                 userRole
@@ -937,7 +937,7 @@ export default function DetailedReportPage({
                           )}
                           {userRole === "admin" && (
                             <TableCell className="text-right">
-                              ₺
+                              €
                               {getAmountsByStatus(
                                 sale,
                                 userRole
@@ -948,7 +948,7 @@ export default function DetailedReportPage({
                           )}
                           {userRole === "admin" && (
                             <TableCell className="text-right">
-                              ₺
+                              €
                               {sale.magaza_pax > 0
                                 ? (
                                     Number.parseFloat(
@@ -971,7 +971,7 @@ export default function DetailedReportPage({
                         </TableCell>
                         {userRole === "admin" && (
                           <TableCell className="text-right">
-                            ₺
+                            €
                             {totalCancelledAmountSum.toLocaleString("tr-TR", {
                               minimumFractionDigits: 2,
                             })}
@@ -979,7 +979,7 @@ export default function DetailedReportPage({
                         )}
                         {userRole === "admin" && (
                           <TableCell className="text-right">
-                            ₺
+                            €
                             {totalApprovedAmountSum.toLocaleString("tr-TR", {
                               minimumFractionDigits: 2,
                             })}
@@ -987,7 +987,7 @@ export default function DetailedReportPage({
                         )}
                         {userRole === "admin" && (
                           <TableCell className="text-right">
-                            ₺
+                            €
                             {(totalPaxSum > 0
                               ? totalApprovedAmountSum / totalPaxSum
                               : 0

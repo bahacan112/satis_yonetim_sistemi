@@ -663,12 +663,12 @@ export default function BireyselRaporlarPage() {
                             {filters.analysisType === "tur" && "Tur"}
                           </th>
                           <th className="text-right p-2">Toplam Satış Adedi</th>
-                          <th className="text-right p-2">İptal Tutar (₺)</th>
+                          <th className="text-right p-2">İptal Tutar (€)</th>
                           <th className="text-right p-2">
-                            Onaylanan Tutar (₺)
+                            Onaylanan Tutar (€)
                           </th>
-                          <th className="text-right p-2">Bekleyen Tutar (₺)</th>
-                          <th className="text-right p-2">Toplam Tutar (₺)</th>
+                          <th className="text-right p-2">Bekleyen Tutar (€)</th>
+                          <th className="text-right p-2">Toplam Tutar (€)</th>
                           <th className="text-right p-2">İşlem Sayısı</th>
                         </tr>
                       </thead>
@@ -703,7 +703,7 @@ export default function BireyselRaporlarPage() {
                                 {item.totalSales.toLocaleString()}
                               </td>
                               <td className="text-right p-2 font-medium">
-                                ₺
+                                €
                                 {item.totalCancelledAmount.toLocaleString(
                                   "tr-TR",
                                   {
@@ -712,7 +712,7 @@ export default function BireyselRaporlarPage() {
                                 )}
                               </td>
                               <td className="text-right p-2 font-medium">
-                                ₺
+                                €
                                 {item.totalApprovedAmount.toLocaleString(
                                   "tr-TR",
                                   {
@@ -721,7 +721,7 @@ export default function BireyselRaporlarPage() {
                                 )}
                               </td>
                               <td className="text-right p-2 font-medium">
-                                ₺
+                                €
                                 {item.totalPendingAmount.toLocaleString(
                                   "tr-TR",
                                   {
@@ -730,7 +730,7 @@ export default function BireyselRaporlarPage() {
                                 )}
                               </td>
                               <td className="text-right p-2 font-medium">
-                                ₺
+                                €
                                 {item.totalAmount.toLocaleString("tr-TR", {
                                   minimumFractionDigits: 2,
                                 })}

@@ -1749,14 +1749,14 @@ urun_adi
                     {userRole === "admin" && (
                       <div className="text-right space-y-1 lg:min-w-[150px]">
                         <div className="text-lg font-bold text-green-600">
-                          ₺{group.magaza_toplam.toFixed(2)}
+                          €{group.magaza_toplam.toFixed(2)}
                         </div>
                         <div className="text-xs sm:text-sm text-gray-500">
                           Mağaza Toplam Tutar
                         </div>
                         {group.magaza_toplam > 0 || group.rehber_toplam > 0 ? (
                           <div className="text-xs text-gray-400">
-                            M: ₺{group.magaza_toplam.toFixed(2)} | R: ₺
+                            M: €{group.magaza_toplam.toFixed(2)} | R: €
                             {group.rehber_toplam.toFixed(2)}
                           </div>
                         ) : null}
@@ -1866,23 +1866,23 @@ urun_adi
                             )}
 
                             {userRole === "admin" && (
-                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                              <TableCell>€{satis.birim_fiyat || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
                               <TableCell>
                                 {satis.bildirim_tipi === "magaza"
                                   ? "****"
-                                  : `₺${satis.birim_fiyat || 0}`}
+                                  : `€${satis.birim_fiyat || 0}`}
                               </TableCell>
                             )}
                             {userRole === "admin" && (
-                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                              <TableCell>€{satis.toplam_tutar || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
                               <TableCell>
                                 {satis.bildirim_tipi === "magaza"
                                   ? "****"
-                                  : `₺${satis.toplam_tutar || 0}`}
+                                  : `€${satis.toplam_tutar || 0}`}
                               </TableCell>
                             )}
 
@@ -1981,23 +1981,23 @@ urun_adi
                             )}
                             <TableCell>{satis.adet || 0}</TableCell>
                             {userRole === "admin" && (
-                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                              <TableCell>€{satis.birim_fiyat || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
                               <TableCell>
                                 {satis.bildirim_tipi === "magaza"
                                   ? "****"
-                                  : `₺${satis.birim_fiyat || 0}`}
+                                  : `€${satis.birim_fiyat || 0}`}
                               </TableCell>
                             )}
                             {userRole === "admin" && (
-                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                              <TableCell>€{satis.toplam_tutar || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
                               <TableCell>
                                 {satis.bildirim_tipi === "magaza"
                                   ? "****"
-                                  : `₺${satis.toplam_tutar || 0}`}
+                                  : `€${satis.toplam_tutar || 0}`}
                               </TableCell>
                             )}
                             <TableCell>

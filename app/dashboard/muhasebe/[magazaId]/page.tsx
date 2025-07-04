@@ -957,7 +957,7 @@ export default function MagazaDetayPage() {
               <div className="text-center">
                 <div className="text-sm text-gray-500">Toplam Satış Tutarı</div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(onaylananTotalSalesAmount).toFixed(2)}
+                  €{toNumber(onaylananTotalSalesAmount).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -975,7 +975,7 @@ export default function MagazaDetayPage() {
                   Pax Satış Ortalaması
                 </div>
                 <div className="text-lg font-bold">
-                  ₺
+                  €
                   {onaylananTotalMagazaPax > 0
                     ? (
                         toNumber(onaylananTotalSalesAmount) /
@@ -989,7 +989,7 @@ export default function MagazaDetayPage() {
                   Toplam Acente Komisyonu
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(onaylananTotalAcenteKomisyon).toFixed(2)}
+                  €{toNumber(onaylananTotalAcenteKomisyon).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -997,7 +997,7 @@ export default function MagazaDetayPage() {
                   Toplam Ofis Komisyonu
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(onaylananTotalOfisKomisyon).toFixed(2)}
+                  €{toNumber(onaylananTotalOfisKomisyon).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1005,7 +1005,7 @@ export default function MagazaDetayPage() {
                   Toplam Tahsilat Acente Payı
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(onaylananTotalTahsilatAcentePayi).toFixed(2)}
+                  €{toNumber(onaylananTotalTahsilatAcentePayi).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1013,7 +1013,7 @@ export default function MagazaDetayPage() {
                   Toplam Tahsilat Ofis Payı
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(onaylananTotalTahsilatOfisPayi).toFixed(2)}
+                  €{toNumber(onaylananTotalTahsilatOfisPayi).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1021,7 +1021,7 @@ export default function MagazaDetayPage() {
                   Kalan Acente Alacağı
                 </div>
                 <div className="text-lg font-bold">
-                  ₺
+                  €
                   {(
                     toNumber(onaylananTotalAcenteKomisyon) -
                     toNumber(onaylananTotalTahsilatAcentePayi)
@@ -1031,7 +1031,7 @@ export default function MagazaDetayPage() {
               <div className="text-center">
                 <div className="text-sm text-gray-500">Kalan Ofis Alacağı</div>
                 <div className="text-lg font-bold">
-                  ₺
+                  €
                   {(
                     toNumber(onaylananTotalOfisKomisyon) -
                     toNumber(onaylananTotalTahsilatOfisPayi)
@@ -1084,7 +1084,7 @@ export default function MagazaDetayPage() {
                             <TableCell>{item.rehber_adi}</TableCell>
                             {allProductNames.map((productName) => (
                               <TableCell key={productName}>
-                                ₺
+                                €
                                 {toNumber(
                                   (item as ProcessedSaleRow).productSales?.[
                                     productName
@@ -1093,17 +1093,17 @@ export default function MagazaDetayPage() {
                               </TableCell>
                             ))}
                             <TableCell>
-                              ₺{toNumber(item.toplam_satis_tutari).toFixed(2)}
+                              €{toNumber(item.toplam_satis_tutari).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺{toNumber(item.pax_satis_ort).toFixed(2)}
+                              €{toNumber(item.pax_satis_ort).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(item.acente_komisyon_tutari).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺{toNumber(item.ofis_komisyon_tutari).toFixed(2)}
+                              €{toNumber(item.ofis_komisyon_tutari).toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right">
                               {/* Satışlar için düzenleme/silme yok */}
@@ -1127,10 +1127,10 @@ export default function MagazaDetayPage() {
                             <TableCell></TableCell>
                             <TableCell></TableCell>
                             <TableCell>
-                              ₺{toNumber(item.acente_payi).toFixed(2)}
+                              €{toNumber(item.acente_payi).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺{toNumber(item.ofis_payi).toFixed(2)}
+                              €{toNumber(item.ofis_payi).toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button
@@ -1175,7 +1175,7 @@ export default function MagazaDetayPage() {
                   Toplam İptal Satış Tutarı
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(iptalTotalSalesAmount).toFixed(2)}
+                  €{toNumber(iptalTotalSalesAmount).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1195,7 +1195,7 @@ export default function MagazaDetayPage() {
                   Pax Satış Ortalaması
                 </div>
                 <div className="text-lg font-bold">
-                  ₺
+                  €
                   {iptalTotalMagazaPax > 0
                     ? (
                         toNumber(iptalTotalSalesAmount) / iptalTotalMagazaPax
@@ -1208,7 +1208,7 @@ export default function MagazaDetayPage() {
                   Toplam İptal Acente Komisyonu
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(iptalTotalAcenteKomisyon).toFixed(2)}
+                  €{toNumber(iptalTotalAcenteKomisyon).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1216,7 +1216,7 @@ export default function MagazaDetayPage() {
                   Toplam İptal Ofis Komisyonu
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(iptalTotalOfisKomisyon).toFixed(2)}
+                  €{toNumber(iptalTotalOfisKomisyon).toFixed(2)}
                 </div>
               </div>
             </CardContent>
@@ -1266,29 +1266,29 @@ export default function MagazaDetayPage() {
                             <TableCell>{saleItem.rehber_adi}</TableCell>
                             {allProductNames.map((productName) => (
                               <TableCell key={productName}>
-                                ₺
+                                €
                                 {toNumber(
                                   saleItem.productSales?.[productName]
                                 ).toFixed(2)}
                               </TableCell>
                             ))}
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(saleItem.toplam_satis_tutari).toFixed(
                                 2
                               )}
                             </TableCell>
                             <TableCell>
-                              ₺{toNumber(saleItem.pax_satis_ort).toFixed(2)}
+                              €{toNumber(saleItem.pax_satis_ort).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(
                                 saleItem.acente_komisyon_tutari
                               ).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(saleItem.ofis_komisyon_tutari).toFixed(
                                 2
                               )}
@@ -1317,7 +1317,7 @@ export default function MagazaDetayPage() {
                   Toplam Bekleyen Satış Tutarı
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(bekleyenTotalSalesAmount).toFixed(2)}
+                  €{toNumber(bekleyenTotalSalesAmount).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1339,7 +1339,7 @@ export default function MagazaDetayPage() {
                   Pax Satış Ortalaması
                 </div>
                 <div className="text-lg font-bold">
-                  ₺
+                  €
                   {bekleyenTotalMagazaPax > 0
                     ? (
                         toNumber(bekleyenTotalSalesAmount) /
@@ -1353,7 +1353,7 @@ export default function MagazaDetayPage() {
                   Toplam Bekleyen Acente Komisyonu
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(bekleyenTotalAcenteKomisyon).toFixed(2)}
+                  €{toNumber(bekleyenTotalAcenteKomisyon).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
@@ -1361,7 +1361,7 @@ export default function MagazaDetayPage() {
                   Toplam Bekleyen Ofis Komisyonu
                 </div>
                 <div className="text-lg font-bold">
-                  ₺{toNumber(bekleyenTotalOfisKomisyon).toFixed(2)}
+                  €{toNumber(bekleyenTotalOfisKomisyon).toFixed(2)}
                 </div>
               </div>
             </CardContent>
@@ -1411,29 +1411,29 @@ export default function MagazaDetayPage() {
                             <TableCell>{saleItem.rehber_adi}</TableCell>
                             {allProductNames.map((productName) => (
                               <TableCell key={productName}>
-                                ₺
+                                €
                                 {toNumber(
                                   saleItem.productSales?.[productName]
                                 ).toFixed(2)}
                               </TableCell>
                             ))}
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(saleItem.toplam_satis_tutari).toFixed(
                                 2
                               )}
                             </TableCell>
                             <TableCell>
-                              ₺{toNumber(saleItem.pax_satis_ort).toFixed(2)}
+                              €{toNumber(saleItem.pax_satis_ort).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(
                                 saleItem.acente_komisyon_tutari
                               ).toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              ₺
+                              €
                               {toNumber(saleItem.ofis_komisyon_tutari).toFixed(
                                 2
                               )}

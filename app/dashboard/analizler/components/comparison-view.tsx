@@ -73,7 +73,7 @@ export function ComparisonView({
     if (filters.metricType === "paxAverage") {
       return value.toFixed(2);
     } else if (filters.metricType === "totalAmount") {
-      return `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
+      return `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
     } else {
       return value.toLocaleString();
     }
@@ -250,7 +250,7 @@ export function ComparisonView({
                         ? filters.metricType === "paxAverage"
                           ? value.toFixed(2)
                           : filters.metricType === "totalAmount"
-                          ? `₺${value.toLocaleString("tr-TR", {
+                          ? `€${value.toLocaleString("tr-TR", {
                               minimumFractionDigits: 2,
                             })}`
                           : value.toLocaleString("tr-TR")
@@ -337,13 +337,13 @@ export function ComparisonView({
                         {userRole === "admin" && (
                           <>
                             <td className="text-right p-2 font-medium">
-                              ₺
+                              €
                               {(item.totalAmount || 0).toLocaleString("tr-TR", {
                                 minimumFractionDigits: 2,
                               })}
                             </td>
                             <td className="text-right p-2">
-                              ₺
+                              €
                               {(item.averageAmount || 0).toLocaleString(
                                 "tr-TR",
                                 { minimumFractionDigits: 2 }

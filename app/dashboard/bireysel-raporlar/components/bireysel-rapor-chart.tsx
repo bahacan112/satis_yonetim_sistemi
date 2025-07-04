@@ -129,7 +129,7 @@ export function BireyselRaporChart({
       case "totalSales":
         return "Toplam Satış Adedi";
       case "totalAmount":
-        return "Toplam Tutar (₺)";
+        return "Toplam Tutar (€)";
       case "paxAverage":
         return "Pax Ortalaması"; // Changed label
       default:
@@ -158,7 +158,7 @@ export function BireyselRaporChart({
       if (typeof value === "number") {
         if (filters.metricType === "totalAmount") {
           return [
-            `₺${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
+            `€${value.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`,
             mainMetricLabel,
           ];
         } else if (filters.metricType === "paxAverage") {
@@ -264,7 +264,7 @@ export function BireyselRaporChart({
                 formatter={(value) => [
                   typeof value === "number"
                     ? filters.metricType === "totalAmount"
-                      ? `₺${value.toLocaleString("tr-TR", {
+                      ? `€${value.toLocaleString("tr-TR", {
                           minimumFractionDigits: 2,
                         })}`
                       : filters.metricType === "paxAverage"
