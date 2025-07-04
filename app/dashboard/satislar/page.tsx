@@ -1,9 +1,8 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
-import { supabase, type Database } from "@/lib/supabase"; // Database tipi eklendi
+import { supabase, type Database } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,33 +61,33 @@ import { AddRehberDialog } from "@/components/dialogs/add-rehber-dialog";
 
 // satislar_detay_view'den gelen veriye uygun arayüz
 interface SatisDetayViewRow {
-  satis_id: string; // UUID olduğu için string
-  satis_tarihi: string | null; // Bu, view'den gelen magaza_giris_tarihi'nin alias'ı
+  satis_id: string;
+  satis_tarihi: string | null;
   grup_gelis_tarihi: string | null;
   magaza_giris_tarihi: string | null;
   grup_pax: number | null;
   magaza_pax: number | null;
-  tur: string | null; // tur_adi from turlar
+  tur: string | null;
   created_at: string;
   operator_adi: string | null;
   rehber_adi: string | null;
   magaza_adi: string | null;
   firma_adi: string | null;
-  urun_id: string | null; // UUID olduğu için string
+  urun_id: string | null;
   urun_adi: string | null;
   adet: number | null;
   birim_fiyat: number | null;
   acente_komisyonu: number | null;
   rehber_komisyonu: number | null;
   kaptan_komisyonu: number | null;
-  ofis_komisyonu: number | null; // Yeni eklendi
+  ofis_komisyonu: number | null;
   toplam_tutar: number | null;
-  bildirim_tipi: "magaza" | "rehber"; // Bu view'den geliyor, satislar tablosundan değil
-  status: "onaylandı" | "beklemede" | "iptal" | null; // bekleme yerine status
-  acente_komisyon_tutari: number | null; // View'den geliyor
-  rehber_komisyon_tutari: number | null; // View'den geliyor
-  kaptan_komisyon_tutari: number | null; // View'den geliyor
-  ofis_komisyon_tutari: number | null; // Yeni eklendi, view'den geliyor
+  bildirim_tipi: "magaza" | "rehber";
+  status: "onaylandı" | "beklemede" | "iptal" | null;
+  acente_komisyon_tutari: number | null;
+  rehber_komisyon_tutari: number | null;
+  kaptan_komisyon_tutari: number | null;
+  ofis_komisyon_tutari: number | null;
   rehber_teyyit_edildi: boolean;
   rehber_teyyit_birim_fiyat: number | null;
   rehber_teyyit_adet: number | null;
@@ -97,49 +96,49 @@ interface SatisDetayViewRow {
 }
 
 interface Operator {
-  id: string; // UUID olduğu için string olarak güncellendi
+  id: string;
   operator_adi: string;
 }
 
 interface Rehber {
-  id: string; // UUID olduğu için string
+  id: string;
   rehber_adi: string;
 }
 
 interface Magaza {
-  id: string; // UUID olduğu için string
+  id: string;
   magaza_adi: string;
-  firma_id: string; // UUID olduğu için string
+  firma_id: string;
 }
 
 interface Firma {
-  id: string; // UUID olduğu için string
+  id: string;
   firma_adi: string;
 }
 
 interface Tur {
-  id: string; // UUID olduğu için string
+  id: string;
   tur_adi: string;
 }
 
 interface Urun {
-  id: string; // UUID olduğu için string
+  id: string;
   urun_adi: string;
 }
 
 interface MagazaUrun {
-  id: string; // UUID olduğu için string
-  urun_id: string; // UUID olduğu için string
+  id: string;
+  urun_id: string;
   acente_komisyonu: number;
   rehber_komisyonu: number;
   kaptan_komisyonu: number;
-  ofis_komisyonu: number; // Yeni eklendi
+  ofis_komisyonu: number;
   urunler:
     | {
         urun_adi: string;
       }
     | { urun_adi: string }[]
-    | null; // Tek bir obje, dizi veya dizi içinde tek obje olabilir
+    | null;
 }
 
 interface SatisUrun {
@@ -147,7 +146,7 @@ interface SatisUrun {
   adet: string;
   birim_fiyat: string;
   bildirim_tipi: "magaza" | "rehber";
-  status: "onaylandı" | "beklemede" | "iptal"; // bekleme yerine status
+  status: "onaylandı" | "beklemede" | "iptal";
   acente_komisyonu: string;
   rehber_komisyonu: string;
   kaptan_komisyonu: string;
@@ -165,8 +164,8 @@ interface GroupedSatis {
   grup_pax: number;
   magaza_pax: number;
   rehber: string;
-  satislar: SatisDetayViewRow[]; // SatisDetayViewRow tipini kullan
-  toplam_tutar: number; // Bu artık sadece mağaza toplamını tutacak
+  satislar: SatisDetayViewRow[];
+  toplam_tutar: number;
   magaza_satislari: SatisDetayViewRow[];
   rehber_satislari: SatisDetayViewRow[];
   magaza_toplam: number;
@@ -186,26 +185,24 @@ interface Filters {
   tur_id: string;
 }
 
-// Form verileri için ayrı bir arayüz
 interface SatisFormState {
-  satis_id?: string | null; // UUID olduğu için string
+  satis_id?: string | null;
   operator_id: string;
   firma_id: string;
   grup_gelis_tarihi: string;
-  satis_tarihi: string; // Bu alan "Mağaza Giriş Tarihi" için kullanılacak
+  satis_tarihi: string;
   grup_pax: string;
   magaza_pax: string;
-  tur_id: string; // UUID olduğu için string
-  rehber_id: string; // UUID olduğu için string
+  tur_id: string;
+  rehber_id: string;
   magaza_id: string;
 }
 
-// Initial default values for a new form
 const defaultSatisUrun: SatisUrun = {
   urun_id: "",
   adet: "1",
   birim_fiyat: "",
-  bildirim_tipi: "magaza", // Will be overridden by userRole in handleAdd
+  bildirim_tipi: "magaza",
   status: "onaylandı",
   acente_komisyonu: "",
   rehber_komisyonu: "",
@@ -227,14 +224,12 @@ const defaultFormDataState: SatisFormState = {
   magaza_id: "",
 };
 
-// Admin bildirim sistemi için yeni fonksiyon
 const sendAdminNotification = async (
   action: string,
   userEmail: string,
   details: any
 ) => {
   try {
-    // Admin kullanıcıları bul
     const { data: adminUsers, error } = await supabase
       .from("profiles")
       .select("id")
@@ -245,7 +240,6 @@ const sendAdminNotification = async (
       return;
     }
 
-    // Her admin için bildirim oluştur
     const notifications = adminUsers?.map((admin) => ({
       user_id: admin.id,
       title: `Satış ${action}`,
@@ -275,21 +269,20 @@ const sendAdminNotification = async (
 
 export default function SatislarPage() {
   const { userRole, user } = useAuth();
-  const [satislar, setSatislar] = useState<SatisDetayViewRow[]>([]); // SatisDetayViewRow tipini kullan
+  const [satislar, setSatislar] = useState<SatisDetayViewRow[]>([]);
   const [filteredSatislar, setFilteredSatislar] = useState<SatisDetayViewRow[]>(
     []
-  ); // SatisDetayViewRow tipini kullan
+  );
   const [groupedSatislar, setGroupedSatislar] = useState<GroupedSatis[]>([]);
   const [operatorler, setOperatorler] = useState<Operator[]>([]);
   const [rehberler, setRehberler] = useState<Rehber[]>([]);
   const [magazalar, setMagazalar] = useState<Magaza[]>([]);
-  const [allMagazalar, setAllMagazalar] = useState<Magaza[]>([]); // Tüm mağazalar için
+  const [allMagazalar, setAllMagazalar] = useState<Magaza[]>([]);
   const [firmalar, setFirmalar] = useState<Firma[]>([]);
   const [turlar, setTurlar] = useState<Tur[]>([]);
-  const [urunler, setUrunler] = useState<Urun[]>([]); // Tüm ürünler için
+  const [urunler, setUrunler] = useState<Urun[]>([]);
   const [magazaUrunleri, setMagazaUrunleri] = useState<MagazaUrun[]>([]);
   const [loading, setLoading] = useState(true);
-  // editingSatis, orijinal satislar tablosundaki kaydı tutacak
   const [editingSatis, setEditingSatis] = useState<
     Database["public"]["Tables"]["satislar"]["Row"] | null
   >(null);
@@ -297,7 +290,7 @@ export default function SatislarPage() {
   const [isOranlarDialogOpen, setIsOranlarDialogOpen] = useState(false);
   const [selectedSatis, setSelectedSatis] = useState<SatisDetayViewRow | null>(
     null
-  ); // SatisDetayViewRow tipini kullan
+  );
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     baslangic_tarihi: "",
@@ -314,7 +307,7 @@ export default function SatislarPage() {
     operator_id: "",
     firma_id: "",
     grup_gelis_tarihi: "",
-    satis_tarihi: new Date().toISOString().split("T")[0], // Bu alan "Mağaza Giriş Tarihi" için kullanılacak
+    satis_tarihi: new Date().toISOString().split("T")[0],
     grup_pax: "",
     magaza_pax: "",
     tur_id: "",
@@ -338,7 +331,6 @@ export default function SatislarPage() {
   ]);
   const [message, setMessage] = useState("");
 
-  // Yeni ekleme diyalogları için state'ler
   const [isAddUrunDialogOpen, setIsAddUrunDialogOpen] = useState(false);
   const [isAddMagazaDialogOpen, setIsAddMagazaDialogOpen] = useState(false);
   const [isAddOperatorDialogOpen, setIsAddOperatorDialogOpen] = useState(false);
@@ -346,13 +338,11 @@ export default function SatislarPage() {
   const [isAddFirmaDialogOpen, setIsAddFirmaDialogOpen] = useState(false);
   const [isAddRehberDialogOpen, setIsAddRehberDialogOpen] = useState(false);
 
-  // Onay diyalogları için state'ler
   const [isConfirmCloseDialogOpen, setIsConfirmCloseDialogOpen] =
     useState(false);
   const [isFormSubmittedSuccessfully, setIsFormSubmittedSuccessfully] =
     useState(false);
 
-  // Değişiklik takibi için yeni state'ler
   const [initialFormData, setInitialFormData] = useState<SatisFormState | null>(
     null
   );
@@ -361,11 +351,9 @@ export default function SatislarPage() {
   >(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Operator için fiyat görünürlük kontrolü
   const canSeePrices = (bildirimTipi: "magaza" | "rehber") => {
     if (userRole === "admin") return true;
     if (userRole === "standart") {
-      // Operator sadece rehber bildirimlerinde fiyat görebilir
       return bildirimTipi === "rehber";
     }
     return false;
@@ -377,13 +365,13 @@ export default function SatislarPage() {
 
   useEffect(() => {
     if (formData.firma_id) {
-      fetchFirmaMagazalari(formData.firma_id); // Zaten string
+      fetchFirmaMagazalari(formData.firma_id);
     }
   }, [formData.firma_id]);
 
   useEffect(() => {
     if (filters.firma_id && filters.firma_id !== "all") {
-      fetchFilterMagazalari(filters.firma_id); // String olarak geçir
+      fetchFilterMagazalari(filters.firma_id);
     } else {
       setMagazalar([]);
     }
@@ -392,7 +380,7 @@ export default function SatislarPage() {
   useEffect(() => {
     if (formData.magaza_id) {
       console.log("Mağaza seçildi, ürünler çekiliyor:", formData.magaza_id);
-      fetchMagazaUrunleri(formData.magaza_id); // String olarak geçir
+      fetchMagazaUrunleri(formData.magaza_id);
     } else {
       console.log("Mağaza seçimi temizlendi");
       setMagazaUrunleri([]);
@@ -407,19 +395,14 @@ export default function SatislarPage() {
     groupSatislar();
   }, [filteredSatislar]);
 
-  // Formdaki değişiklikleri izleyen useEffect
   useEffect(() => {
-    // Sadece diyalog açıksa ve başlangıç state'leri ayarlanmışsa değişiklikleri takip et
     if (!isDialogOpen || !initialFormData || !initialSatisUrunleri) {
       setHasUnsavedChanges(false);
       return;
     }
 
-    // FormData'nın derinlemesine karşılaştırması
     const formChanged =
       JSON.stringify(formData) !== JSON.stringify(initialFormData);
-
-    // SatisUrunleri'nin derinlemesine karşılaştırması
     const satisUrunleriChanged =
       JSON.stringify(satisUrunleri) !== JSON.stringify(initialSatisUrunleri);
 
@@ -432,12 +415,11 @@ export default function SatislarPage() {
     isDialogOpen,
   ]);
 
-  // Sayfadan ayrılırken onay isteyen useEffect
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         event.preventDefault();
-        event.returnValue = ""; // Bazı tarayıcılar için gerekli
+        event.returnValue = "";
       }
     };
 
@@ -450,7 +432,6 @@ export default function SatislarPage() {
 
   const fetchData = async () => {
     try {
-      // Satışları çek
       const { data: satislarData, error: satislarError } = await supabase
         .from("satislar")
         .select(
@@ -473,11 +454,9 @@ export default function SatislarPage() {
 
       if (satislarError) throw satislarError;
 
-      // Her satış için mağaza ve rehber kalemlerini çek
       const enrichedSatislar: SatisDetayViewRow[] = [];
 
       for (const satis of satislarData || []) {
-        // Mağaza satış kalemlerini çek
         const { data: magazaKalemleri, error: magazaError } = await supabase
           .from("magaza_satis_kalemleri")
           .select(
@@ -498,7 +477,6 @@ export default function SatislarPage() {
 
         if (magazaError) throw magazaError;
 
-        // Rehber satış kalemlerini çek
         const { data: rehberKalemleri, error: rehberError } = await supabase
           .from("rehber_satis_kalemleri")
           .select(
@@ -515,7 +493,6 @@ export default function SatislarPage() {
 
         if (rehberError) throw rehberError;
 
-        // İlgili tabloların verilerini çek
         const [operatorData, firmaData, magazaData, turData, rehberData] =
           await Promise.all([
             satis.operator_id
@@ -555,7 +532,6 @@ export default function SatislarPage() {
               : { data: null },
           ]);
 
-        // Mağaza kalemlerini ekle
         for (const kalem of magazaKalemleri || []) {
           const toplamTutar = (kalem.adet || 0) * (kalem.birim_fiyat || 0);
           enrichedSatislar.push({
@@ -598,7 +574,6 @@ export default function SatislarPage() {
           });
         }
 
-        // Rehber kalemlerini ekle
         for (const kalem of rehberKalemleri || []) {
           const toplamTutar = (kalem.adet || 0) * (kalem.birim_fiyat || 0);
           enrichedSatislar.push({
@@ -640,7 +615,6 @@ export default function SatislarPage() {
 
       setSatislar(enrichedSatislar);
 
-      // Diğer verileri çek (operatorler, rehberler, vs.)
       const { data: operatorData, error: operatorError } = await supabase
         .from("operatorler")
         .select("id, operator_adi")
@@ -701,7 +675,7 @@ export default function SatislarPage() {
       const { data, error } = await supabase
         .from("magazalar")
         .select("id, magaza_adi, firma_id")
-        .eq("firma_id", firmaId) // UUID string olarak kullan
+        .eq("firma_id", firmaId)
         .order("magaza_adi");
 
       if (error) throw error;
@@ -754,10 +728,9 @@ urun_adi
 
       console.log("Çekilen mağaza ürünleri:", data);
 
-      // Veriyi doğru tipte ayarla
       const typedData: MagazaUrun[] = (data || []).map((item: any) => ({
         ...item,
-        urunler: item.urunler || null, // Tek obje olarak bırak
+        urunler: item.urunler || null,
       }));
       setMagazaUrunleri(typedData);
       console.log("State'e set edilen mağaza ürünleri:", typedData);
@@ -785,7 +758,6 @@ urun_adi
     }
 
     if (filters.firma_id && filters.firma_id !== "all") {
-      // Firma adı üzerinden filtreleme
       const selectedFirma = firmalar.find(
         (f) => f.id.toString() === filters.firma_id
       );
@@ -797,7 +769,6 @@ urun_adi
     }
 
     if (filters.magaza_id && filters.magaza_id !== "all") {
-      // Mağaza adı üzerinden filtreleme
       const selectedMagaza = allMagazalar.find(
         (m) => m.id.toString() === filters.magaza_id
       );
@@ -809,7 +780,6 @@ urun_adi
     }
 
     if (filters.operator_id && filters.operator_id !== "all") {
-      // Operatör adı üzerinden filtreleme
       const selectedOperator = operatorler.find(
         (o) => o.id.toString() === filters.operator_id
       );
@@ -821,7 +791,6 @@ urun_adi
     }
 
     if (filters.rehber_id && filters.rehber_id !== "all") {
-      // Rehber adı üzerinden filtreleme
       const selectedRehber = rehberler.find(
         (r) => r.id.toString() === filters.rehber_id
       );
@@ -839,7 +808,6 @@ urun_adi
     }
 
     if (filters.tur_id && filters.tur_id !== "all") {
-      // Tur adı üzerinden filtreleme
       const selectedTur = turlar.find(
         (t) => t.id.toString() === filters.tur_id
       );
@@ -869,8 +837,8 @@ urun_adi
           grup_pax: satis.grup_pax || 0,
           magaza_pax: satis.magaza_pax || 0,
           rehber: satis.rehber_adi || "-",
-          satislar: [], // This will hold all items for the sale_id
-          toplam_tutar: 0, // This will be the sum of magaza_toplam
+          satislar: [],
+          toplam_tutar: 0,
           magaza_satislari: [],
           rehber_satislari: [],
           magaza_toplam: 0,
@@ -879,9 +847,8 @@ urun_adi
         };
       }
 
-      grouped[key].satislar.push(satis); // Keep all items for the sale_id here
+      grouped[key].satislar.push(satis);
 
-      // Only include non-cancelled items in totals
       const itemToplamTutar =
         satis.status !== "iptal" ? Number(satis.toplam_tutar) || 0 : 0;
 
@@ -894,15 +861,13 @@ urun_adi
       }
     });
 
-    // Uyumluluk kontrolü - sadece toplam tutarlar karşılaştırılır
     Object.values(grouped).forEach((group) => {
-      const tolerans = 0.01; // 1 kuruş tolerans
+      const tolerans = 0.01;
       group.uyumlu =
         Math.abs(group.magaza_toplam - group.rehber_toplam) <= tolerans;
-      group.toplam_tutar = group.magaza_toplam; // Main total for display, usually magaza total
+      group.toplam_tutar = group.magaza_toplam;
     });
 
-    // Durum filtresini uygula
     let finalGroups = Object.values(grouped);
     if (filters.durum && filters.durum !== "all") {
       if (filters.durum === "uyumlu") {
@@ -931,38 +896,35 @@ urun_adi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(""); // Önceki mesajları temizle
+    setMessage("");
 
     try {
       let currentSatisId: string | null = null;
       const isUpdate = !!formData.satis_id;
 
       if (formData.satis_id) {
-        // Mevcut satışı düzenleme
         currentSatisId = formData.satis_id;
-        // Ana satislar kaydını güncelle
         const { error: updateSatisError } = await supabase
           .from("satislar")
           .update({
             operator_id: formData.operator_id || null,
             firma_id: formData.firma_id || null,
             grup_gelis_tarihi: formData.grup_gelis_tarihi || null,
-            magaza_giris_tarihi: formData.satis_tarihi || null, // satis_tarihi yerine magaza_giris_tarihi kullanıldı
+            magaza_giris_tarihi: formData.satis_tarihi || null,
             grup_pax: formData.grup_pax
               ? Number.parseInt(formData.grup_pax)
               : 0,
             magaza_pax: formData.magaza_pax
               ? Number.parseInt(formData.magaza_pax)
               : 0,
-            tur_id: formData.tur_id || null, // Artık string UUID
-            rehber_id: formData.rehber_id || null, // Artık string UUID
+            tur_id: formData.tur_id || null,
+            rehber_id: formData.rehber_id || null,
             magaza_id: formData.magaza_id || null,
           })
           .eq("id", currentSatisId);
 
         if (updateSatisError) throw updateSatisError;
 
-        // Mevcut satış kalemlerini sil
         const { error: deleteMagazaItemsError } = await supabase
           .from("magaza_satis_kalemleri")
           .delete()
@@ -975,32 +937,30 @@ urun_adi
           .eq("satis_id", currentSatisId);
         if (deleteRehberItemsError) throw deleteRehberItemsError;
       } else {
-        // Yeni satış ekleme
         const { data: newSatis, error: insertSatisError } = await supabase
           .from("satislar")
           .insert({
             operator_id: formData.operator_id || null,
             firma_id: formData.firma_id || null,
             grup_gelis_tarihi: formData.grup_gelis_tarihi || null,
-            magaza_giris_tarihi: formData.satis_tarihi || null, // satis_tarihi yerine magaza_giris_tarihi kullanıldı
+            magaza_giris_tarihi: formData.satis_tarihi || null,
             grup_pax: formData.grup_pax
               ? Number.parseInt(formData.grup_pax)
               : 0,
             magaza_pax: formData.magaza_pax
               ? Number.parseInt(formData.magaza_pax)
               : 0,
-            tur_id: formData.tur_id || null, // Artık string UUID
-            rehber_id: formData.rehber_id || null, // Artık string UUID
+            tur_id: formData.tur_id || null,
+            rehber_id: formData.rehber_id || null,
             magaza_id: formData.magaza_id || null,
           })
-          .select("id") // Yeni eklenen kaydın ID'sini seç
+          .select("id")
           .single();
 
         if (insertSatisError) throw insertSatisError;
         currentSatisId = newSatis.id;
       }
 
-      // Satış kalemlerini ekle/güncelle
       const validUrunler = satisUrunleri.filter(
         (su) =>
           su.urun_id &&
@@ -1009,7 +969,6 @@ urun_adi
       );
 
       for (const satisUrun of validUrunler) {
-        // magazaUrunleri'ndeki urunler alanı artık bir dizi olduğu için ilk elemanı alıyoruz
         const selectedMagazaUrun = magazaUrunleri.find(
           (mu) => mu.urun_id === satisUrun.urun_id
         );
@@ -1022,7 +981,7 @@ urun_adi
         if (satisUrun.bildirim_tipi === "magaza") {
           const itemToSave = {
             satis_id: currentSatisId,
-            urun_id: satisUrun.urun_id, // Artık string UUID
+            urun_id: satisUrun.urun_id,
             adet: Number.parseInt(satisUrun.adet),
             birim_fiyat: birimFiyat,
             acente_komisyonu:
@@ -1037,7 +996,6 @@ urun_adi
               userRole === "admin" && satisUrun.kaptan_komisyonu !== ""
                 ? Number.parseFloat(satisUrun.kaptan_komisyonu)
                 : selectedMagazaUrun?.kaptan_komisyonu || 0,
-            // Yeni eklendi
             ofis_komisyonu:
               userRole === "admin" && satisUrun.ofis_komisyonu !== ""
                 ? Number.parseFloat(satisUrun.ofis_komisyonu)
@@ -1050,12 +1008,11 @@ urun_adi
             .insert(itemToSave);
           if (error) throw error;
         } else {
-          // Rehber satış kalemleri için sadece temel bilgiler
           const { error } = await supabase
             .from("rehber_satis_kalemleri")
             .insert({
               satis_id: currentSatisId,
-              urun_id: satisUrun.urun_id, // Artık string UUID
+              urun_id: satisUrun.urun_id,
               adet: Number.parseInt(satisUrun.adet),
               birim_fiyat: birimFiyat,
               status: satisUrun.status,
@@ -1065,7 +1022,6 @@ urun_adi
         }
       }
 
-      // Admin bildirim sistemi - sadece rehber ve standart kullanıcılar için
       if (userRole === "rehber" || userRole === "standart") {
         const actionType = isUpdate ? "güncellendi" : "eklendi";
         const notificationDetails = {
@@ -1091,13 +1047,12 @@ urun_adi
           formData.satis_id ? "güncellendi" : "eklendi"
         }! ${validUrunler.length} ürün kaydedildi.`,
       });
-      setIsFormSubmittedSuccessfully(true); // Başarılı gönderimde bayrağı ayarla
-      setIsDialogOpen(false); // Diyaloğu kapat
-      // resetForm() ve setEditingSatis(null) onOpenChange tarafından yönetilecek
+      setIsFormSubmittedSuccessfully(true);
+      setIsDialogOpen(false);
       fetchData();
       setTimeout(() => setMessage(""), 3000);
     } catch (error: any) {
-      console.error("Error saving satis:", JSON.stringify(error, null, 2)); // Hata objesini detaylı logla
+      console.error("Error saving satis:", JSON.stringify(error, null, 2));
       const errorMessage =
         error.message ||
         error.details ||
@@ -1108,7 +1063,7 @@ urun_adi
         description: `Hata: ${errorMessage}`,
         variant: "destructive",
       });
-      setIsFormSubmittedSuccessfully(false); // Hata durumunda bayrağı false yap
+      setIsFormSubmittedSuccessfully(false);
     }
   };
 
@@ -1122,17 +1077,15 @@ urun_adi
 
     setFormData(defaultFormDataState);
     setSatisUrunleri(resetSatisUrunleri);
-    setInitialFormData(defaultFormDataState); // Reset initial state too
-    setInitialSatisUrunleri(resetSatisUrunleri); // Reset initial state too
+    setInitialFormData(defaultFormDataState);
+    setInitialSatisUrunleri(resetSatisUrunleri);
     setHasUnsavedChanges(false);
   };
 
   const handleDelete = async (id: string) => {
-    // ID tipi string olarak güncellendi
     if (!confirm("Bu satışı silmek istediğinizden emin misiniz?")) return;
 
     try {
-      // Önce ilgili satış kalemlerini sil
       const { error: deleteMagazaItemsError } = await supabase
         .from("magaza_satis_kalemleri")
         .delete()
@@ -1145,11 +1098,9 @@ urun_adi
         .eq("satis_id", id);
       if (deleteRehberItemsError) throw deleteRehberItemsError;
 
-      // Sonra ana satışı sil
       const { error } = await supabase.from("satislar").delete().eq("id", id);
       if (error) throw error;
 
-      // Admin bildirim sistemi - sadece rehber ve standart kullanıcılar için
       if (userRole === "rehber" || userRole === "standart") {
         await sendAdminNotification(
           "silindi",
@@ -1190,20 +1141,19 @@ urun_adi
     setEditingSatis(null);
     setFormData(defaultFormDataState);
     setSatisUrunleri(newSatisUrunleri);
-    setInitialFormData(defaultFormDataState); // Set initial state for new form
-    setInitialSatisUrunleri(newSatisUrunleri); // Set initial state for new form
-    setIsFormSubmittedSuccessfully(false); // Yeni ekleme modunda bayrağı sıfırla
-    setHasUnsavedChanges(false); // Başlangıçta değişiklik yok
+    setInitialFormData(defaultFormDataState);
+    setInitialSatisUrunleri(newSatisUrunleri);
+    setIsFormSubmittedSuccessfully(false);
+    setHasUnsavedChanges(false);
     setIsDialogOpen(true);
   };
 
   const handleEdit = async (satisDetay: SatisDetayViewRow) => {
-    setLoading(true); // Düzenleme için yüklemeyi başlat
+    setLoading(true);
     try {
-      // Orijinal satis kaydını tüm ID'leri almak için çek
       const { data: originalSatis, error: satisError } = await supabase
         .from("satislar")
-        .select("*") // Tüm sütunları çek
+        .select("*")
         .eq("id", satisDetay.satis_id)
         .single();
 
@@ -1218,19 +1168,17 @@ urun_adi
         return;
       }
 
-      // İlgili satış kalemlerini çek (magaza_satis_kalemleri veya rehber_satis_kalemleri)
-      // Her iki tablodan da çekip birleştireceğiz
       const { data: magazaItems, error: magagaItemsError } = await supabase
         .from("magaza_satis_kalemleri")
         .select(
-          "urun_id, adet, birim_fiyat, acente_komisyonu, rehber_komisyonu, kaptan_komisyonu, ofis_komisyonu, status, satis_aciklamasi" // ofis_komisyonu ve satis_aciklamasi eklendi
+          "urun_id, adet, birim_fiyat, acente_komisyonu, rehber_komisyonu, kaptan_komisyonu, ofis_komisyonu, status, satis_aciklamasi"
         )
         .eq("satis_id", satisDetay.satis_id);
       if (magagaItemsError) throw magagaItemsError;
 
       const { data: rehberItems, error: rehberItemsError } = await supabase
         .from("rehber_satis_kalemleri")
-        .select("urun_id, adet, birim_fiyat, status, satis_aciklamasi") // satis_aciklamasi eklendi
+        .select("urun_id, adet, birim_fiyat, status, satis_aciklamasi")
         .eq("satis_id", satisDetay.satis_id);
       if (rehberItemsError) throw rehberItemsError;
 
@@ -1245,8 +1193,8 @@ urun_adi
           rehber_komisyonu: item.rehber_komisyonu?.toString() || "",
           kaptan_komisyonu: item.kaptan_komisyonu?.toString() || "",
           ofis_komisyonu: item.ofis_komisyonu?.toString() || "",
-          showCommissions: false, // Default to hidden
-          satis_aciklamasi: item.satis_aciklamasi || "", // Add this
+          showCommissions: false,
+          satis_aciklamasi: item.satis_aciklamasi || "",
         })),
         ...(rehberItems || []).map((item) => ({
           urun_id: item.urun_id?.toString() || "",
@@ -1254,26 +1202,26 @@ urun_adi
           birim_fiyat: item.birim_fiyat?.toString() || "",
           bildirim_tipi: "rehber" as "magaza" | "rehber",
           status: item.status || "onaylandı",
-          acente_komisyonu: "", // Rehber items don't have these, so empty
+          acente_komisyonu: "",
           rehber_komisyonu: "",
           kaptan_komisyonu: "",
           ofis_komisyonu: "",
-          showCommissions: false, // Default to hidden
-          satis_aciklamasi: item.satis_aciklamasi || "", // Add this
+          showCommissions: false,
+          satis_aciklamasi: item.satis_aciklamasi || "",
         })),
       ];
 
       const currentFormData: SatisFormState = {
-        satis_id: originalSatis.id, // Güncelleme için ID'yi sakla
+        satis_id: originalSatis.id,
         operator_id: originalSatis.operator_id?.toString() || "",
-        firma_id: originalSatis.firma_id?.toString() || "", // UUID string olarak
+        firma_id: originalSatis.firma_id?.toString() || "",
         grup_gelis_tarihi: originalSatis.grup_gelis_tarihi || "",
-        satis_tarihi: originalSatis.magaza_giris_tarihi || "", // originalSatis.satis_tarihi yerine originalSatis.magaza_giris_tarihi kullanıldı
+        satis_tarihi: originalSatis.magaza_giris_tarihi || "",
         grup_pax: originalSatis.grup_pax?.toString() || "",
         magaza_pax: originalSatis.magaza_pax?.toString() || "",
-        tur_id: originalSatis.tur_id?.toString() || "", // UUID string olarak
-        rehber_id: originalSatis.rehber_id?.toString() || "", // UUID string olarak
-        magaza_id: originalSatis.magaza_id?.toString() || "", // UUID string olarak
+        tur_id: originalSatis.tur_id?.toString() || "",
+        rehber_id: originalSatis.rehber_id?.toString() || "",
+        magaza_id: originalSatis.magaza_id?.toString() || "",
       };
 
       const currentSatisUrunleri: SatisUrun[] =
@@ -1286,18 +1234,17 @@ urun_adi
               },
             ];
 
-      setEditingSatis(originalSatis); // Orijinal satışı referans olarak tut
+      setEditingSatis(originalSatis);
       setFormData(currentFormData);
       setSatisUrunleri(currentSatisUrunleri);
 
-      setInitialFormData(currentFormData); // Set initial state for editing
-      setInitialSatisUrunleri(currentSatisUrunleri); // Set initial state for editing
-      setIsFormSubmittedSuccessfully(false); // Düzenleme modunda bayrağı sıfırla
-      setHasUnsavedChanges(false); // Başlangıçta değişiklik yok
+      setInitialFormData(currentFormData);
+      setInitialSatisUrunleri(currentSatisUrunleri);
+      setIsFormSubmittedSuccessfully(false);
+      setHasUnsavedChanges(false);
 
-      // Formdaki seçili magaza_id için mağaza ürünlerini çek
       if (originalSatis.magaza_id) {
-        await fetchMagazaUrunleri(originalSatis.magaza_id.toString()); // String olarak geçir
+        await fetchMagazaUrunleri(originalSatis.magaza_id.toString());
       } else {
         setMagazaUrunleri([]);
       }
@@ -1412,11 +1359,9 @@ urun_adi
   };
 
   const handleUrunAdded = (newUrunId: string) => {
-    // Mağaza ürünlerini yenile
     if (formData.magaza_id) {
       fetchMagazaUrunleri(formData.magaza_id);
     }
-    // Yeni eklenen ürünü ilk satıra otomatik seç
     setTimeout(() => {
       setSatisUrunleri((prev) => {
         const updated = [...prev];
@@ -1425,33 +1370,31 @@ urun_adi
         }
         return updated;
       });
-    }, 500); // Mağaza ürünleri yenilendikten sonra seçim yap
+    }, 500);
   };
 
   const handleMagazaAdded = (newMagazaId: string) => {
-    fetchData(); // Mağaza listesini yenile
+    fetchData();
     setFormData((prev) => ({ ...prev, magaza_id: newMagazaId }));
   };
 
   const handleOperatorAdded = (newOperatorId: string) => {
-    fetchData(); // Operatör listesini yenile
+    fetchData();
     setFormData((prev) => ({ ...prev, operator_id: newOperatorId }));
   };
 
   const handleTurAdded = (newTurId: string) => {
-    // ID tipi string
-    fetchData(); // Tur listesini yenile
+    fetchData();
     setFormData((prev) => ({ ...prev, tur_id: newTurId }));
   };
 
   const handleFirmaAdded = (newFirmaId: string) => {
-    fetchData(); // Firma listesini yenile
+    fetchData();
     setFormData((prev) => ({ ...prev, firma_id: newFirmaId }));
   };
 
   const handleRehberAdded = (newRehberId: string) => {
-    // ID tipi string
-    fetchData(); // Rehber listesini yenile
+    fetchData();
     setFormData((prev) => ({ ...prev, rehber_id: newRehberId }));
   };
 
@@ -1461,12 +1404,10 @@ urun_adi
     console.log("Mevcut satış ürünleri state:", satisUrunleri[index]);
     console.log("Mevcut mağaza ürünleri:", magazaUrunleri);
 
-    // Önce ürün ID'sini güncelle
     const updated = [...satisUrunleri];
     updated[index] = { ...updated[index], urun_id: urunId };
     setSatisUrunleri(updated);
 
-    // Sonra komisyon oranlarını güncelle
     const selectedMagazaUrun = magazaUrunleri.find(
       (mu) => mu.urun_id === urunId
     );
@@ -1489,41 +1430,33 @@ urun_adi
     }
   };
 
-  // Ana diyalog kapatma işleyicisi
   const handleMainDialogClose = (open: boolean) => {
     if (!open) {
-      // Diyalog kapanıyorsa
       if (!isFormSubmittedSuccessfully && hasUnsavedChanges) {
-        // Başarılı bir gönderim olmadıysa VE kaydedilmemiş değişiklikler varsa onay iste
         setIsConfirmCloseDialogOpen(true);
       } else {
-        // Başarılı bir gönderim olduysa VEYA değişiklik yoksa direkt kapat
         setIsDialogOpen(false);
-        resetForm(); // Formu sıfırla
-        setEditingSatis(null); // Düzenleme durumunu temizle
-        setIsFormSubmittedSuccessfully(false); // Bayrağı sıfırla
-        setHasUnsavedChanges(false); // Değişiklik yok olarak işaretle
+        resetForm();
+        setEditingSatis(null);
+        setIsFormSubmittedSuccessfully(false);
+        setHasUnsavedChanges(false);
       }
     } else {
-      // Diyalog açılıyorsa
       setIsDialogOpen(open);
-      setIsFormSubmittedSuccessfully(false); // Yeni açılışta bayrağı sıfırla
-      // hasUnsavedChanges, useEffect tarafından initial state'e göre belirlenecek
+      setIsFormSubmittedSuccessfully(false);
     }
   };
 
-  // Değişiklikleri atmayı onayla
   const confirmDiscardChanges = () => {
-    setIsConfirmCloseDialogOpen(false); // Onay diyalogunu kapat
-    setIsDialogOpen(false); // Ana diyalogunu kapat
-    resetForm(); // Form verilerini sıfırla
-    setEditingSatis(null); // Düzenleme durumunu temizle
-    setIsFormSubmittedSuccessfully(false); // Bayrağı sıfırla
+    setIsConfirmCloseDialogOpen(false);
+    setIsDialogOpen(false);
+    resetForm();
+    setEditingSatis(null);
+    setIsFormSubmittedSuccessfully(false);
   };
 
-  // Değişiklikleri atmayı iptal et
   const cancelDiscardChanges = () => {
-    setIsConfirmCloseDialogOpen(false); // Sadece onay diyalogunu kapat, ana diyalog açık kalsın
+    setIsConfirmCloseDialogOpen(false);
   };
 
   if (userRole !== "admin" && userRole !== "standart") {
@@ -1742,7 +1675,6 @@ urun_adi
                 </div>
               )}
 
-              {/* Durum filtresi artık tüm roller için görünür */}
               <div>
                 <Label>Durum</Label>
                 <Select
@@ -1801,7 +1733,6 @@ urun_adi
                         <Badge variant="outline" className="text-xs">
                           {group.tur}
                         </Badge>
-                        {/* Durum rozeti artık sadece adminler için görünür */}
                         {userRole === "admin" && getDurumBadge(group)}
                       </div>
                       <div className="text-xs sm:text-sm text-gray-600">
@@ -1838,14 +1769,33 @@ urun_adi
                     <Table className="min-w-full">
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="min-w-[120px]">Ürün</TableHead>
+                          {/* Ürün sütunu - standart kullanıcılar için mağaza satışlarında gizli */}
+                          {userRole === "admin" && (
+                            <TableHead className="min-w-[120px]">
+                              Ürün
+                            </TableHead>
+                          )}
+                          {userRole === "standart" && (
+                            <TableHead className="min-w-[120px]">
+                              Ürün
+                            </TableHead>
+                          )}
+
                           {(userRole === "admin" ||
                             userRole === "standart") && (
                             <TableHead className="min-w-[100px]">
                               Bildirim
                             </TableHead>
                           )}
-                          <TableHead className="min-w-[60px]">Adet</TableHead>
+
+                          {/* Adet sütunu - standart kullanıcılar için mağaza satışlarında gizli */}
+                          {userRole === "admin" && (
+                            <TableHead className="min-w-[60px]">Adet</TableHead>
+                          )}
+                          {userRole === "standart" && (
+                            <TableHead className="min-w-[60px]">Adet</TableHead>
+                          )}
+
                           {(userRole === "admin" ||
                             userRole === "standart") && (
                             <TableHead className="min-w-[100px]">
@@ -1858,7 +1808,19 @@ urun_adi
                               Toplam
                             </TableHead>
                           )}
-                          <TableHead className="min-w-[100px]">Durum</TableHead>
+
+                          {/* Durum sütunu - standart kullanıcılar için mağaza satışlarında gizli */}
+                          {userRole === "admin" && (
+                            <TableHead className="min-w-[100px]">
+                              Durum
+                            </TableHead>
+                          )}
+                          {userRole === "standart" && (
+                            <TableHead className="min-w-[100px]">
+                              Durum
+                            </TableHead>
+                          )}
+
                           <TableHead className="min-w-[200px]">
                             İşlemler
                           </TableHead>
@@ -1870,9 +1832,18 @@ urun_adi
                           <TableRow
                             key={`magaza-${satis.satis_id}-${itemIndex}`}
                           >
-                            <TableCell className="font-medium">
-                              {satis.urun_adi || "-"}
-                            </TableCell>
+                            {/* Ürün adı - standart kullanıcılar için mağaza satışlarında gizli */}
+                            {userRole === "admin" && (
+                              <TableCell className="font-medium">
+                                {satis.urun_adi || "-"}
+                              </TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell className="font-medium">
+                                ****
+                              </TableCell>
+                            )}
+
                             {(userRole === "admin" ||
                               userRole === "standart") && (
                               <TableCell>
@@ -1885,44 +1856,71 @@ urun_adi
                                 </Badge>
                               </TableCell>
                             )}
-                            <TableCell>{satis.adet || 0}</TableCell>
+
+                            {/* Adet - standart kullanıcılar için mağaza satışlarında gizli */}
+                            {userRole === "admin" && (
+                              <TableCell>{satis.adet || 0}</TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>****</TableCell>
+                            )}
+
                             {userRole === "admin" && (
                               <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
-                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                              <TableCell>
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `₺${satis.birim_fiyat || 0}`}
+                              </TableCell>
                             )}
                             {userRole === "admin" && (
                               <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
-                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                              <TableCell>
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `₺${satis.toplam_tutar || 0}`}
+                              </TableCell>
                             )}
-                            <TableCell>
-                              {satis.status === "onaylandı" && (
-                                <Badge
-                                  variant="default"
-                                  className="bg-green-100 text-green-800 text-xs"
-                                >
-                                  Onaylandı
-                                </Badge>
-                              )}
-                              {satis.status === "beklemede" && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  Beklemede
-                                </Badge>
-                              )}
-                              {satis.status === "iptal" && (
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs"
-                                >
-                                  İptal
-                                </Badge>
-                              )}
-                              {!satis.status && "-"}
-                            </TableCell>
+
+                            {/* Durum - standart kullanıcılar için mağaza satışlarında gizli */}
+                            {userRole === "admin" && (
+                              <TableCell>
+                                {satis.status === "onaylandı" && (
+                                  <Badge
+                                    variant="default"
+                                    className="bg-green-100 text-green-800 text-xs"
+                                  >
+                                    Onaylandı
+                                  </Badge>
+                                )}
+                                {satis.status === "beklemede" && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    Beklemede
+                                  </Badge>
+                                )}
+                                {satis.status === "iptal" && (
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-xs"
+                                  >
+                                    İptal
+                                  </Badge>
+                                )}
+                                {!satis.status && "-"}
+                              </TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>****</TableCell>
+                            )}
+
                             <TableCell>
                               <div className="flex flex-col sm:flex-row gap-2">
                                 <Button
@@ -1934,15 +1932,18 @@ urun_adi
                                   <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                   Düzenle
                                 </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleDelete(satis.satis_id)}
-                                  className="text-xs"
-                                >
-                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                  Sil
-                                </Button>
+                                {(userRole === "admin" ||
+                                  satis.bildirim_tipi === "rehber") && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDelete(satis.satis_id)}
+                                    className="text-xs"
+                                  >
+                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    Sil
+                                  </Button>
+                                )}
                                 {userRole === "admin" && (
                                   <Button
                                     variant="secondary"
@@ -1958,7 +1959,7 @@ urun_adi
                             </TableCell>
                           </TableRow>
                         ))}
-                        {/* Rehber Satışları */}
+                        {/* Rehber Satışları - Bu kısımda kısıtlama yok */}
                         {group.rehber_satislari.map((satis, itemIndex) => (
                           <TableRow
                             key={`rehber-${satis.satis_id}-${itemIndex}`}
@@ -1983,13 +1984,21 @@ urun_adi
                               <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
-                              <TableCell>₺{satis.birim_fiyat || 0}</TableCell>
+                              <TableCell>
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `₺${satis.birim_fiyat || 0}`}
+                              </TableCell>
                             )}
                             {userRole === "admin" && (
                               <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
                             )}
                             {userRole === "standart" && (
-                              <TableCell>₺{satis.toplam_tutar || 0}</TableCell>
+                              <TableCell>
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `₺${satis.toplam_tutar || 0}`}
+                              </TableCell>
                             )}
                             <TableCell>
                               {satis.status === "onaylandı" && (

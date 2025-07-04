@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,62 +15,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Eye, EyeOff, Shield } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { Eye, EyeOff, Shield, AlertCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase-monitored";
+import { toast } from "sonner";
 import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaError, setCaptchaError] = useState("");
-  const [captchaLoaded, setCaptchaLoaded] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const router = useRouter();
 
-  // reCAPTCHA site key - production'da gerçek key kullan
-  const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-
-  useEffect(() => {
-    // reCAPTCHA script'inin yüklenip yüklenmediğini kontrol et
-    const checkRecaptchaLoaded = () => {
-      if (typeof window !== "undefined" && window.grecaptcha) {
-        setCaptchaLoaded(true);
-      }
-    };
-
-    // Script yüklendikten sonra kontrol et
-    const timer = setTimeout(checkRecaptchaLoaded, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleCaptchaChange = (token: string | null) => {
-    console.log("CAPTCHA token received:", token ? "✓" : "✗");
     setCaptchaToken(token);
-    setCaptchaError("");
-  };
-
-  const handleCaptchaError = () => {
-    console.error("reCAPTCHA error occurred");
-    setCaptchaError(
-      "CAPTCHA yüklenirken hata oluştu. Lütfen sayfayı yenileyin."
-    );
-    setCaptchaToken(null);
   };
 
   const handleCaptchaExpired = () => {
-    console.warn("reCAPTCHA expired");
     setCaptchaToken(null);
-    setCaptchaError("CAPTCHA süresi doldu. Lütfen tekrar doğrulayın.");
+    toast.error("reCAPTCHA süresi doldu, lütfen tekrar doğrulayın");
+  };
+
+  const handleCaptchaError = () => {
+    setCaptchaToken(null);
+    toast.error("reCAPTCHA doğrulaması başarısız");
   };
 
   const verifyCaptcha = async (token: string): Promise<boolean> => {
     try {
-      console.log("Verifying CAPTCHA token...");
       const response = await fetch("/api/verify-captcha", {
         method: "POST",
         headers: {
@@ -79,11 +54,10 @@ export default function LoginPage() {
         body: JSON.stringify({ token }),
       });
 
-      const data = await response.json();
-      console.log("CAPTCHA verification result:", data.success ? "✓" : "✗");
-      return data.success;
+      const result = await response.json();
+      return result.success;
     } catch (error) {
-      console.error("CAPTCHA verification error:", error);
+      console.error("Captcha verification error:", error);
       return false;
     }
   };
@@ -91,63 +65,60 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setCaptchaError("");
 
     if (!email || !password) {
-      setError("Email ve şifre gereklidir");
+      setError("Lütfen tüm alanları doldurun");
       return;
     }
 
     if (!captchaToken) {
-      setCaptchaError("Lütfen güvenlik doğrulamasını tamamlayın");
+      setError("Lütfen reCAPTCHA doğrulamasını tamamlayın");
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      // CAPTCHA doğrulaması
-      const isCaptchaValid = await verifyCaptcha(captchaToken);
-      if (!isCaptchaValid) {
-        setCaptchaError(
-          "Güvenlik doğrulaması başarısız. Lütfen tekrar deneyin."
-        );
+      // Verify captcha first
+      const captchaValid = await verifyCaptcha(captchaToken);
+      if (!captchaValid) {
+        setError("reCAPTCHA doğrulaması başarısız");
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
         return;
       }
 
-      // Supabase ile giriş
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Attempt login
+      const { data, error: authError } = await supabase.auth.signInWithPassword(
+        {
+          email,
+          password,
+        }
+      );
 
-      if (error) {
-        setError(error.message);
-        // Hata durumunda CAPTCHA'yı sıfırla
+      if (authError) {
+        setError(authError.message);
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
         return;
       }
 
       if (data.user) {
+        toast.success("Giriş başarılı!");
         router.push("/dashboard");
-        router.refresh();
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Giriş yapılırken bir hata oluştu");
-      // Hata durumunda CAPTCHA'yı sıfırla
+      setError("Giriş sırasında bir hata oluştu");
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
@@ -157,7 +128,7 @@ export default function LoginPage() {
             Giriş Yap
           </CardTitle>
           <CardDescription className="text-center">
-            Satış yönetim sistemine giriş yapın
+            Hesabınıza erişmek için bilgilerinizi girin
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -170,8 +141,8 @@ export default function LoginPage() {
                 placeholder="ornek@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
                 required
-                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -183,8 +154,8 @@ export default function LoginPage() {
                   placeholder="Şifrenizi girin"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                   required
-                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -192,61 +163,32 @@ export default function LoginPage() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4 text-gray-400" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-gray-400" />
                   )}
                 </Button>
               </div>
             </div>
 
-            {/* Güvenlik Doğrulaması */}
-            <div className="space-y-2">
-              <Label>Güvenlik Doğrulaması</Label>
-              <div className="flex justify-center">
-                {RECAPTCHA_SITE_KEY ? (
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={handleCaptchaChange}
-                    onError={handleCaptchaError}
-                    onExpired={handleCaptchaExpired}
-                    theme="light"
-                    size="normal"
-                  />
-                ) : (
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                    <p className="text-sm text-gray-500">
-                      reCAPTCHA yapılandırılmamış
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      NEXT_PUBLIC_RECAPTCHA_SITE_KEY environment variable'ı
-                      eksik
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {captchaError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{captchaError}</AlertDescription>
-                </Alert>
-              )}
-
-              {/* Debug bilgisi - sadece development'ta göster */}
-              {process.env.NODE_ENV === "development" && (
-                <div className="text-xs text-gray-500 text-center">
-                  <p>Site Key: {RECAPTCHA_SITE_KEY ? "✓ Mevcut" : "✗ Eksik"}</p>
-                  <p>Token: {captchaToken ? "✓ Alındı" : "✗ Bekleniyor"}</p>
-                </div>
-              )}
+            {/* reCAPTCHA */}
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                onChange={handleCaptchaChange}
+                onExpired={handleCaptchaExpired}
+                onErrored={handleCaptchaError}
+                theme="light"
+              />
             </div>
 
             {error && (
               <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -254,43 +196,11 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || (!captchaToken && RECAPTCHA_SITE_KEY)}
+              disabled={loading || !captchaToken}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Giriş yapılıyor...
-                </>
-              ) : (
-                "Giriş Yap"
-              )}
+              {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
             </Button>
           </form>
-
-          {/* reCAPTCHA bilgi metni */}
-          {RECAPTCHA_SITE_KEY && (
-            <div className="mt-4 text-xs text-gray-500 text-center">
-              Bu site reCAPTCHA ile korunmaktadır ve Google{" "}
-              <a
-                href="https://policies.google.com/privacy"
-                className="underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Gizlilik Politikası
-              </a>{" "}
-              ve{" "}
-              <a
-                href="https://policies.google.com/terms"
-                className="underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Hizmet Şartları
-              </a>{" "}
-              geçerlidir.
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

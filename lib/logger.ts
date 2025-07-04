@@ -1,54 +1,40 @@
-import pino from "pino";
+interface LogData {
+  [key: string]: any;
+}
 
-// Server mı?
-const isServer = typeof window === "undefined";
-// Development mı?
-const isDev = process.env.NODE_ENV === "development";
+class Logger {
+  private formatMessage(
+    level: string,
+    message: string,
+    data?: LogData
+  ): string {
+    const timestamp = new Date().toISOString();
+    const logData = data ? ` ${JSON.stringify(data)}` : "";
+    return `[${timestamp}] [${level.toUpperCase()}] ${message}${logData}`;
+  }
 
-// Logger konfigürasyonu
-const logger = pino({
-  level: isDev ? "debug" : "info",
-  browser: {
-    asObject: true,
-  },
-  ...(isServer && isDev
-    ? {
-        transport: {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            translateTime: "SYS:standard",
-            ignore: "pid,hostname",
-          },
-        },
-      }
-    : {}),
-});
+  info(message: string, data?: LogData): void {
+    console.log(this.formatMessage("info", message, data));
+  }
 
-// Supabase işlemleri için özel logger
-export const supabaseLogger = logger.child({ component: "supabase" });
+  warn(message: string, data?: LogData): void {
+    console.warn(this.formatMessage("warn", message, data));
+  }
 
-// Security işlemleri için özel logger
-export const securityLogger = logger.child({ component: "security" });
+  error(message: string, data?: LogData): void {
+    console.error(this.formatMessage("error", message, data));
+  }
 
-// API işlemleri için özel logger
-export const apiLogger = logger.child({ component: "api" });
+  debug(message: string, data?: LogData): void {
+    console.debug(this.formatMessage("debug", message, data));
+  }
+}
 
-// Veritabanına log kaydetme fonksiyonu
-export const logToDatabase = async (logData: {
-  level: string;
-  message: string;
-  component: string;
-  operation?: string;
-  table_name?: string;
-  method?: string;
-  duration_ms?: number;
-  status?: string;
-  error_message?: string;
-  user_id?: string;
-  metadata?: any;
-}) => {
-  // Bu fonksiyon monitored supabase client tarafından kullanılacak
-};
+// Create logger instances
+export const supabaseLogger = new Logger();
+export const securityLogger = new Logger();
+export const authLogger = new Logger();
+export const apiLogger = new Logger();
 
-export default logger;
+// Default export
+export default new Logger();

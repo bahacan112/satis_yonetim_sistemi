@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import type React from "react";
+import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   LogOut,
   User,
@@ -27,25 +33,26 @@ import {
   Bell,
   Menu,
   Shield,
-} from "lucide-react"
-import Link from "next/link"
-import { NotificationsDropdown } from "@/components/notifications-dropdown"
+} from "lucide-react";
+import Link from "next/link";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const { user, userRole, loading, signOut } = useAuth()
-  const router = useRouter()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, userRole, loading, signOut } = useAuth();
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     // Auth yüklendikten sonra kontrol et
     if (!loading && !user) {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [user, loading, router])
+  }, [user, loading, router]);
 
   // Loading durumunda spinner göster
   if (loading) {
@@ -53,22 +60,30 @@ export default function DashboardLayout({
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
-    )
+    );
   }
 
   // Kullanıcı yoksa login'e yönlendir
   if (!user) {
-    return null
+    return null;
   }
 
   const handleSignOut = async () => {
+    if (signingOut) return; // Çift tıklamayı önle
+
     try {
-      await signOut()
-      router.push("/login")
+      setSigningOut(true);
+      await signOut();
+      // Başarılı çıkış sonrası kesin yönlendirme
+      window.location.href = "/";
     } catch (error) {
-      console.error("Çıkış hatası:", error)
+      console.error("Çıkış hatası:", error);
+      // Hata durumunda da yönlendir
+      window.location.href = "/";
+    } finally {
+      setSigningOut(false);
     }
-  }
+  };
 
   // Menü öğeleri
   const menuItems = [
@@ -106,31 +121,31 @@ export default function DashboardLayout({
             href: "/dashboard/firmalar",
             icon: Building2,
             label: "Firmalar",
-            show: userRole === "admin" || userRole === "standart",
+            show: userRole === "admin",
           },
           {
             href: "/dashboard/magazalar",
             icon: Store,
             label: "Mağazalar",
-            show: userRole === "admin" || userRole === "standart",
+            show: userRole === "admin",
           },
           {
             href: "/dashboard/urunler",
             icon: Package,
             label: "Ürünler",
-            show: userRole === "admin" || userRole === "standart",
+            show: userRole === "admin",
           },
           {
             href: "/dashboard/magaza-urunler",
             icon: Layers,
             label: "Mağaza Ürünleri",
-            show: userRole === "admin" || userRole === "standart",
+            show: userRole === "admin",
           },
           {
             href: "/dashboard/operatorler",
             icon: Users,
             label: "Operatörler",
-            show: userRole === "admin" || userRole === "standart",
+            show: userRole === "admin",
           },
           {
             href: "/dashboard/rehberler",
@@ -175,7 +190,7 @@ export default function DashboardLayout({
       label: "Güvenlik & İzleme",
       show: userRole === "admin",
     },
-  ].filter((item) => item.show)
+  ].filter((item) => item.show);
 
   // Sidebar içeriği
   const SidebarContent = () => (
@@ -194,7 +209,7 @@ export default function DashboardLayout({
         ))}
       </div>
     </div>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -206,33 +221,54 @@ export default function DashboardLayout({
               {/* Hamburger menü butonu - sadece mobil ve tablette görünür */}
               <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden mr-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="md:hidden mr-2"
+                  >
                     <Menu className="h-5 w-5" />
                     <span className="sr-only">Menüyü aç</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-64 p-0">
                   <SheetHeader className="p-4 border-b">
-                    <SheetTitle className="text-lg font-semibold text-gray-900">Menü</SheetTitle>
+                    <SheetTitle className="text-lg font-semibold text-gray-900">
+                      Menü
+                    </SheetTitle>
                   </SheetHeader>
                   <SidebarContent />
                 </SheetContent>
               </Sheet>
 
-              <h1 className="text-xl font-semibold text-gray-900">Satış Yönetim Sistemi</h1>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Satış Yönetim Sistemi
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700 hidden sm:inline">{user.email}</span>
+                <span className="text-sm text-gray-700 hidden sm:inline">
+                  {user.email}
+                </span>
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                  {userRole === "admin" ? "Yönetici" : userRole === "standart" ? "Standart Kullanıcı" : "Rehber"}
+                  {userRole === "admin"
+                    ? "Yönetici"
+                    : userRole === "standart"
+                    ? "Standart Kullanıcı"
+                    : "Rehber"}
                 </span>
               </div>
               <NotificationsDropdown />
-              <Button onClick={handleSignOut} variant="outline" size="sm">
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                size="sm"
+                disabled={signingOut}
+              >
                 <LogOut className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Çıkış</span>
+                <span className="hidden sm:inline">
+                  {signingOut ? "Çıkış yapılıyor..." : "Çıkış"}
+                </span>
               </Button>
             </div>
           </div>
@@ -249,5 +285,5 @@ export default function DashboardLayout({
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }
