@@ -33,9 +33,11 @@ import {
   Bell,
   Menu,
   Shield,
+  Languages,
 } from "lucide-react";
 import Link from "next/link";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
+import { useI18n } from '@/contexts/i18n-context';
 
 export default function DashboardLayout({
   children,
@@ -44,6 +46,7 @@ export default function DashboardLayout({
 }) {
   const { user, userRole, loading, signOut } = useAuth();
   const router = useRouter();
+  const { language, setLanguage, t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -77,7 +80,7 @@ export default function DashboardLayout({
       // Başarılı çıkış sonrası kesin yönlendirme
       window.location.href = "/";
     } catch (error) {
-      console.error("Çıkış hatası:", error);
+      console.error(t('auth.signOutError'), error);
       // Hata durumunda da yönlendir
       window.location.href = "/";
     } finally {
@@ -85,12 +88,16 @@ export default function DashboardLayout({
     }
   };
 
+  const switchLanguage = () => {
+    setLanguage(language === 'tr' ? 'en' : 'tr');
+  };
+
   // Menü öğeleri
   const menuItems = [
     {
       href: "/dashboard",
       icon: Home,
-      label: "Dashboard",
+      label: t('navigation.dashboard'),
       show: true,
     },
     // Rehber kullanıcıları için özel menü
@@ -99,19 +106,19 @@ export default function DashboardLayout({
           {
             href: "/dashboard/rehber-satis-bildirimi",
             icon: MessageSquare,
-            label: "Satış Bildirimim",
+            label: t('navigation.mySalesNotification'),
             show: true,
           },
           {
             href: "/dashboard/rehber-primler",
             icon: DollarSign,
-            label: "Primlerim",
+            label: t('navigation.myCommissions'),
             show: true,
           },
           {
             href: "/dashboard/rehber-durum",
             icon: AlertTriangle,
-            label: "Satış Durumlarım",
+            label: t('navigation.mySalesStatus'),
             show: true,
           },
         ]
@@ -120,74 +127,74 @@ export default function DashboardLayout({
           {
             href: "/dashboard/firmalar",
             icon: Building2,
-            label: "Firmalar",
+            label: t('navigation.companies'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/magazalar",
             icon: Store,
-            label: "Mağazalar",
+            label: t('navigation.stores'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/urunler",
             icon: Package,
-            label: "Ürünler",
+            label: t('navigation.products'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/magaza-urunler",
             icon: Layers,
-            label: "Mağaza Ürünleri",
+            label: t('navigation.storeProducts'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/operatorler",
             icon: Users,
-            label: "Operatörler",
+            label: t('navigation.operators'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/rehberler",
             icon: BookOpen,
-            label: "Rehberler",
+            label: t('navigation.guides'),
             show: userRole === "admin" || userRole === "standart",
           },
           {
             href: "/dashboard/turlar",
             icon: Calendar,
-            label: "Turlar",
+            label: t('navigation.tours'),
             show: userRole === "admin" || userRole === "standart",
           },
           {
             href: "/dashboard/muhasebe",
             icon: Calculator,
-            label: "Muhasebe",
+            label: t('navigation.accounting'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/bildirimler",
             icon: Bell,
-            label: "Bildirimler",
+            label: t('navigation.notifications'),
             show: userRole === "admin",
           },
           {
             href: "/dashboard/satislar",
             icon: ShoppingCart,
-            label: "Satışlar",
+            label: t('navigation.sales'),
             show: userRole === "admin" || userRole === "standart",
           },
           {
             href: "/dashboard/bireysel-raporlar",
             icon: BarChart2,
-            label: "Bireysel Raporlar",
+            label: t('navigation.individualReports'),
             show: userRole === "admin",
           },
         ]),
     {
       href: "/dashboard/security",
       icon: Shield,
-      label: "Güvenlik & İzleme",
+      label: t('navigation.security'),
       show: userRole === "admin",
     },
   ].filter((item) => item.show);
@@ -227,13 +234,13 @@ export default function DashboardLayout({
                     className="md:hidden mr-2"
                   >
                     <Menu className="h-5 w-5" />
-                    <span className="sr-only">Menüyü aç</span>
+                    <span className="sr-only">{t('navigation.openMenu')}</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-64 p-0">
                   <SheetHeader className="p-4 border-b">
                     <SheetTitle className="text-lg font-semibold text-gray-900">
-                      Menü
+                      {t('navigation.menu')}
                     </SheetTitle>
                   </SheetHeader>
                   <SidebarContent />
@@ -241,7 +248,7 @@ export default function DashboardLayout({
               </Sheet>
 
               <h1 className="text-xl font-semibold text-gray-900">
-                Satış Yönetim Sistemi
+                {t('dashboard.title')}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
@@ -252,12 +259,26 @@ export default function DashboardLayout({
                 </span>
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                   {userRole === "admin"
-                    ? "Yönetici"
+                    ? t('userRoles.admin')
                     : userRole === "standart"
-                    ? "Standart Kullanıcı"
-                    : "Rehber"}
+                    ? t('userRoles.standard')
+                    : t('userRoles.guide')}
                 </span>
               </div>
+              
+              {/* Language Switcher */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={switchLanguage}
+                  className="flex items-center space-x-1"
+                >
+                  <Languages className="h-4 w-4" />
+                  <span className="text-xs">{language === 'tr' ? 'EN' : 'TR'}</span>
+                </Button>
+              </div>
+              
               <NotificationsDropdown />
               <Button
                 onClick={handleSignOut}
@@ -267,7 +288,7 @@ export default function DashboardLayout({
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">
-                  {signingOut ? "Çıkış yapılıyor..." : "Çıkış"}
+                  {signingOut ? t('auth.signingOut') : t('auth.logout')}
                 </span>
               </Button>
             </div>

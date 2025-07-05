@@ -29,9 +29,12 @@ import {
   HeadphonesIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from '@/contexts/i18n-context';
+import { Languages } from "lucide-react";
 
 export default function HomePage() {
   const { user, loading, signOut } = useAuth();
+  const { language, setLanguage, t } = useI18n();
   const [hasAdminUser, setHasAdminUser] = useState<boolean | null>(null);
   const [tablesExist, setTablesExist] = useState<boolean | null>(null);
   const [checkingSetup, setCheckingSetup] = useState(true);
@@ -91,7 +94,7 @@ export default function HomePage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Yükleniyor...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -128,18 +131,18 @@ export default function HomePage() {
               <div className="bg-blue-600 p-3 rounded-md w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Database className="w-8 h-8 text-white" />
               </div>
-              <CardTitle className="text-xl">Sistem Kurulumu Gerekli</CardTitle>
+              <CardTitle className="text-xl">{t('dashboard.systemSetupRequired')}</CardTitle>
               <CardDescription>
                 {!tablesExist
-                  ? "Veritabanı tabloları henüz oluşturulmamış"
-                  : "Admin kullanıcısı oluşturulması gerekiyor"}
+                  ? t('dashboard.databaseNotCreated')
+                  : t('dashboard.adminUserNeeded')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-center">
               <p className="text-gray-600">
                 {!tablesExist
-                  ? "Sistemi kullanmaya başlamak için önce veritabanı tablolarını oluşturun."
-                  : "Veritabanı hazır! Şimdi bir admin kullanıcısı oluşturun."}
+                  ? t('dashboard.setupInstructions')
+                  : t('dashboard.adminInstructions')}
               </p>
               <div className="space-y-3">
                 {!tablesExist ? (
@@ -148,14 +151,14 @@ export default function HomePage() {
                       asChild
                       className="w-full bg-black hover:bg-gray-800 text-white"
                     >
-                      <Link href="/self-hosted-guide">Kurulum Rehberi</Link>
+                      <Link href="/self-hosted-guide">{t('dashboard.setupGuide')}</Link>
                     </Button>
                     <Button
                       asChild
                       variant="outline"
                       className="w-full bg-transparent"
                     >
-                      <Link href="/test-connection">Bağlantı Testi</Link>
+                      <Link href="/test-connection">{t('dashboard.connectionTest')}</Link>
                     </Button>
                   </>
                 ) : (
@@ -164,14 +167,14 @@ export default function HomePage() {
                       asChild
                       className="w-full bg-black hover:bg-gray-800 text-white"
                     >
-                      <Link href="/simple-setup">Admin Oluştur</Link>
+                      <Link href="/simple-setup">{t('dashboard.createAdmin')}</Link>
                     </Button>
                     <Button
                       asChild
                       variant="outline"
                       className="w-full bg-transparent"
                     >
-                      <Link href="/setup">Detaylı Kurulum</Link>
+                      <Link href="/setup">{t('dashboard.detailedSetup')}</Link>
                     </Button>
                   </>
                 )}
@@ -198,22 +201,33 @@ export default function HomePage() {
               </div>
               <div className="ml-3">
                 <h1 className="text-lg font-semibold text-gray-900">
-                  Satış Yönetim Sistemi
+                  {t('dashboard.title')}
                 </h1>
-                <p className="text-sm text-gray-500">Turizm Sektörü Çözümü</p>
+                <p className="text-sm text-gray-500">{t('dashboard.subtitle')}</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Language Switcher */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+                className="flex items-center space-x-1"
+              >
+                <Languages className="h-4 w-4" />
+                <span className="text-xs">{language === 'tr' ? 'EN' : 'TR'}</span>
+              </Button>
+              
               {user ? (
                 <>
                   <Button
                     asChild
                     className="bg-black hover:bg-gray-800 text-white"
                   >
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard">{t('navigation.dashboard')}</Link>
                   </Button>
                   <Button variant="outline" onClick={handleSignOut}>
-                    Çıkış
+                    {t('auth.logout')}
                   </Button>
                 </>
               ) : (
@@ -221,7 +235,7 @@ export default function HomePage() {
                   asChild
                   className="bg-black hover:bg-gray-800 text-white"
                 >
-                  <Link href="/login">Giriş Yap</Link>
+                  <Link href="/login">{t('auth.login')}</Link>
                 </Button>
               )}
             </div>
@@ -238,16 +252,14 @@ export default function HomePage() {
               className="mb-6 bg-blue-50 text-blue-700 border-blue-200"
             >
               <Globe className="w-4 h-4 mr-2" />
-              Turizm Sektörü İçin Özel Tasarım
+              {t('homepage.specialDesign')}
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              <span className="text-blue-600">Satış Yönetim</span>
-              <span className="block text-gray-900">Sistemi</span>
+              <span className="text-blue-600">{t('homepage.salesManagement')}</span>
+              <span className="block text-gray-900">{t('homepage.system')}</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Turizm sektörü için özel olarak tasarlanmış, kapsamlı satış
-              yönetim ve muhasebe sistemi. Rehberler, mağazalar, satışlar ve
-              komisyonları tek platformda yönetin.
+              {t('homepage.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {user ? (
@@ -257,10 +269,10 @@ export default function HomePage() {
                     size="lg"
                     className="bg-black hover:bg-gray-800 text-white"
                   >
-                    <Link href="/dashboard">Dashboard'a Git</Link>
+                    <Link href="/dashboard">{t('dashboard.goToDashboard')}</Link>
                   </Button>
                   <Button asChild variant="outline" size="lg">
-                    <Link href="#features">Özellikleri Keşfet</Link>
+                    <Link href="#features">{t('dashboard.exploreFeatures')}</Link>
                   </Button>
                 </>
               ) : (
@@ -270,10 +282,10 @@ export default function HomePage() {
                     size="lg"
                     className="bg-black hover:bg-gray-800 text-white"
                   >
-                    <Link href="/login">Sisteme Giriş Yap</Link>
+                    <Link href="/login">{t('dashboard.systemLogin')}</Link>
                   </Button>
                   <Button asChild variant="outline" size="lg">
-                    <Link href="#features">Özellikleri Keşfet</Link>
+                    <Link href="#features">{t('dashboard.exploreFeatures')}</Link>
                   </Button>
                 </>
               )}
@@ -287,11 +299,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Güçlü Özellikler
+              {t('homepage.powerfulFeatures')}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Turizm sektörünün ihtiyaçlarına özel olarak tasarlanmış kapsamlı
-              çözümler
+              {t('homepage.featuresDescription')}
             </p>
           </div>
 
@@ -302,24 +313,24 @@ export default function HomePage() {
                 <div className="bg-blue-600 p-3 rounded-md w-fit mb-4">
                   <ShoppingCart className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Satış Yönetimi</CardTitle>
+                <CardTitle className="text-lg">{t('homepage.salesManagementTitle')}</CardTitle>
                 <CardDescription>
-                  Tüm satış süreçlerinizi dijitalleştirin ve takip edin
+                  {t('homepage.salesManagementDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Satış kaydı ve onay süreci
+                    {t('homepage.salesRecord')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Ürün ve tur yönetimi
+                    {t('homepage.productTourManagement')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Durum takibi (Beklemede, Onaylandı, İptal)
+                    {t('homepage.statusTracking')}
                   </li>
                 </ul>
               </CardContent>
@@ -331,24 +342,24 @@ export default function HomePage() {
                 <div className="bg-green-600 p-3 rounded-md w-fit mb-4">
                   <Calculator className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Muhasebe & Komisyon</CardTitle>
+                <CardTitle className="text-lg">{t('homepage.accountingCommission')}</CardTitle>
                 <CardDescription>
-                  Otomatik komisyon hesaplama ve muhasebe takibi
+                  {t('homepage.accountingDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Acente ve ofis komisyonu hesaplama
+                    {t('homepage.agencyCommission')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Tahsilat takibi
+                    {t('homepage.collectionTracking')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Firma bazlı muhasebe özeti
+                    {t('homepage.companySummary')}
                   </li>
                 </ul>
               </CardContent>
@@ -360,24 +371,24 @@ export default function HomePage() {
                 <div className="bg-purple-600 p-3 rounded-md w-fit mb-4">
                   <PieChart className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Analiz & Raporlama</CardTitle>
+                <CardTitle className="text-lg">{t('homepage.analysisReporting')}</CardTitle>
                 <CardDescription>
-                  Detaylı analizler ve görsel raporlar
+                  {t('homepage.analysisDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Bireysel performans raporları
+                    {t('homepage.individualReports')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Karşılaştırmalı analizler
+                    {t('homepage.comparativeAnalysis')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    PDF rapor dışa aktarma
+                    {t('homepage.pdfExport')}
                   </li>
                 </ul>
               </CardContent>
@@ -389,24 +400,24 @@ export default function HomePage() {
                 <div className="bg-orange-600 p-3 rounded-md w-fit mb-4">
                   <Users className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Kullanıcı Yönetimi</CardTitle>
+                <CardTitle className="text-lg">{t('homepage.userManagement')}</CardTitle>
                 <CardDescription>
-                  Rol tabanlı erişim kontrolü ve kullanıcı yönetimi
+                  {t('homepage.userManagementDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Admin, Standart, Rehber rolleri
+                    {t('homepage.userRoles')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Güvenli kimlik doğrulama
+                    {t('homepage.secureAuth')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Kişiselleştirilmiş dashboard
+                    {t('homepage.personalizedDashboard')}
                   </li>
                 </ul>
               </CardContent>
@@ -418,24 +429,24 @@ export default function HomePage() {
                 <div className="bg-red-600 p-3 rounded-md w-fit mb-4">
                   <Building2 className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Firma & Mağaza</CardTitle>
+                <CardTitle className="text-lg">{t('homepage.companyStore')}</CardTitle>
                 <CardDescription>
-                  Merkezi firma ve mağaza yönetimi
+                  {t('homepage.companyStoreDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Çoklu firma desteği
+                    {t('homepage.multiCompany')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Mağaza bazlı ürün yönetimi
+                    {t('homepage.storeProducts')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Hiyerarşik organizasyon yapısı
+                    {t('homepage.hierarchicalOrg')}
                   </li>
                 </ul>
               </CardContent>
@@ -447,22 +458,22 @@ export default function HomePage() {
                 <div className="bg-teal-600 p-3 rounded-md w-fit mb-4">
                   <Smartphone className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">Mobil Uyumlu</CardTitle>
-                <CardDescription>Her cihazdan erişim imkanı</CardDescription>
+                <CardTitle className="text-lg">{t('homepage.mobileCompatible')}</CardTitle>
+                <CardDescription>{t('homepage.mobileDesc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Responsive tasarım
+                    {t('homepage.responsiveDesign')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Tablet ve telefon desteği
+                    {t('homepage.tabletPhoneSupport')}
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                    Saha çalışanları için optimize
+                    {t('homepage.crossPlatform')}
                   </li>
                 </ul>
               </CardContent>
@@ -476,10 +487,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Avantajlar
+              {t('advantages.title')}
             </h2>
             <p className="text-lg text-gray-600">
-              Neden bu sistemi tercih etmelisiniz?
+              {t('advantages.subtitle')}
             </p>
           </div>
 
@@ -489,10 +500,10 @@ export default function HomePage() {
                 <Clock className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Zaman Tasarrufu
+                {t('advantages.timeSaving')}
               </h3>
               <p className="text-gray-600">
-                Manuel işlemleri otomatikleştirerek zamandan tasarruf edin
+                {t('advantages.timeSavingDesc')}
               </p>
             </div>
 
@@ -501,10 +512,10 @@ export default function HomePage() {
                 <Calculator className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Hata Minimizasyonu
+                {t('advantages.errorMinimization')}
               </h3>
               <p className="text-gray-600">
-                Otomatik hesaplamalar ile insan kaynaklı hataları azaltın
+                {t('advantages.errorMinimizationDesc')}
               </p>
             </div>
 
@@ -513,10 +524,10 @@ export default function HomePage() {
                 <TrendingUp className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Performans Takibi
+                {t('advantages.performanceTracking')}
               </h3>
               <p className="text-gray-600">
-                Detaylı raporlar ile performansınızı sürekli izleyin
+                {t('advantages.performanceTrackingDesc')}
               </p>
             </div>
 
@@ -525,10 +536,10 @@ export default function HomePage() {
                 <Zap className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Hızlı Karar Alma
+                {t('advantages.quickDecision')}
               </h3>
               <p className="text-gray-600">
-                Anlık veriler ile daha hızlı ve doğru kararlar alın
+                {t('advantages.quickDecisionDesc')}
               </p>
             </div>
           </div>
@@ -539,39 +550,35 @@ export default function HomePage() {
       <section className="py-16 bg-blue-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Neden Bu Sistem?
+            {t('about.title')}
           </h2>
           <p className="text-lg text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Turizm sektöründe faaliyet gösteren firmalar için özel olarak
-            geliştirilmiş bu sistem, satış süreçlerinizi dijitalleştirerek
-            verimliliğinizi artırır. Rehber yönetiminden komisyon
-            hesaplamalarına, muhasebe takibinden detaylı raporlamaya kadar tüm
-            ihtiyaçlarınızı karşılar.
+            {t('about.description')}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
             <div className="text-center">
               <div className="bg-blue-500 rounded-md p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Shield className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Güvenli</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('about.secure')}</h3>
               <p className="text-blue-100">
-                Verileriniz güvenli sunucularda korunur
+                {t('about.secureDesc')}
               </p>
             </div>
             <div className="text-center">
               <div className="bg-blue-500 rounded-md p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <HeadphonesIcon className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Destek</h3>
-              <p className="text-blue-100">7/24 teknik destek hizmeti</p>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('about.support')}</h3>
+              <p className="text-blue-100">{t('about.supportDesc')}</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-500 rounded-md p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <TrendingUp className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Büyüme</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('about.growth')}</h3>
               <p className="text-blue-100">
-                İşletmenizle birlikte büyüyen sistem
+                {t('about.growthDesc')}
               </p>
             </div>
           </div>
@@ -582,7 +589,7 @@ export default function HomePage() {
                 size="lg"
                 className="bg-white text-black hover:bg-gray-100"
               >
-                <Link href="/login">Sistemi Deneyin</Link>
+                <Link href="/login">{t('about.trySystem')}</Link>
               </Button>
             </div>
           )}
@@ -599,54 +606,53 @@ export default function HomePage() {
                   <BarChart3 className="h-6 w-6 text-white" />
                 </div>
                 <span className="ml-3 text-lg font-semibold">
-                  Satış Yönetim Sistemi
+                  {t('footer.systemName')}
                 </span>
               </div>
               <p className="text-gray-400 leading-relaxed">
-                Turizm sektörü için özel olarak tasarlanmış, kapsamlı satış
-                yönetim ve muhasebe sistemi.
+                {t('footer.description')}
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Özellikler</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('footer.features')}</h3>
               <ul className="space-y-2 text-gray-400">
                 <li className="hover:text-white transition-colors">
-                  Satış Yönetimi
+                  {t('homepage.salesManagementTitle')}
                 </li>
                 <li className="hover:text-white transition-colors">
-                  Muhasebe & Komisyon
+                  {t('homepage.accountingCommission')}
                 </li>
                 <li className="hover:text-white transition-colors">
-                  Analiz & Raporlama
+                  {t('homepage.analysisReporting')}
                 </li>
                 <li className="hover:text-white transition-colors">
-                  Kullanıcı Yönetimi
+                  {t('homepage.userManagement')}
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">Avantajlar</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('footer.advantages')}</h3>
               <ul className="space-y-2 text-gray-400">
                 <li className="hover:text-white transition-colors">
-                  Zaman Tasarrufu
+                  {t('advantages.timeSaving')}
                 </li>
                 <li className="hover:text-white transition-colors">
-                  Hata Minimizasyonu
+                  {t('advantages.errorMinimization')}
                 </li>
                 <li className="hover:text-white transition-colors">
-                  Performans Takibi
+                  {t('advantages.performanceTracking')}
                 </li>
                 <li className="hover:text-white transition-colors">
-                  Mobil Uyumlu
+                  {t('homepage.mobileCompatible')}
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Satış Yönetim Sistemi. Tüm hakları saklıdır.</p>
+            <p>&copy; 2024 {t('footer.systemName')}. {t('footer.copyright')}</p>
           </div>
         </div>
       </footer>

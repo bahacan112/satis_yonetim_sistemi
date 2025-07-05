@@ -19,6 +19,7 @@ import { Eye, EyeOff, Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase-monitored";
 import { toast } from "sonner";
 import ReCAPTCHA from "react-google-recaptcha";
+import { useI18n } from '@/contexts/i18n-context';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const router = useRouter();
+  const { t } = useI18n();
 
   const handleCaptchaChange = (token: string | null) => {
     setCaptchaToken(token);
@@ -36,12 +38,12 @@ export default function LoginPage() {
 
   const handleCaptchaExpired = () => {
     setCaptchaToken(null);
-    toast.error("reCAPTCHA süresi doldu, lütfen tekrar doğrulayın");
+    toast.error(t('auth.captchaExpired'));
   };
 
   const handleCaptchaError = () => {
     setCaptchaToken(null);
-    toast.error("reCAPTCHA doğrulaması başarısız");
+    toast.error(t('auth.captchaFailed'));
   };
 
   const verifyCaptcha = async (token: string): Promise<boolean> => {
@@ -67,12 +69,12 @@ export default function LoginPage() {
     setError("");
 
     if (!email || !password) {
-      setError("Lütfen tüm alanları doldurun");
+      setError(t('auth.fillAllFields'));
       return;
     }
 
     if (!captchaToken) {
-      setError("Lütfen reCAPTCHA doğrulamasını tamamlayın");
+      setError(t('auth.completeCaptcha'));
       return;
     }
 
@@ -82,7 +84,7 @@ export default function LoginPage() {
       // Verify captcha first
       const captchaValid = await verifyCaptcha(captchaToken);
       if (!captchaValid) {
-        setError("reCAPTCHA doğrulaması başarısız");
+        setError(t('auth.captchaFailed'));
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
         return;
@@ -104,12 +106,12 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        toast.success("Giriş başarılı!");
+        toast.success(t('auth.loginSuccess'));
         router.push("/dashboard");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Giriş sırasında bir hata oluştu");
+      setError(t('auth.loginError'));
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
     } finally {
@@ -125,20 +127,20 @@ export default function LoginPage() {
             <Shield className="h-12 w-12 text-blue-600" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
-            Giriş Yap
+            {t('auth.loginTitle')}
           </CardTitle>
           <CardDescription className="text-center">
-            Hesabınıza erişmek için bilgilerinizi girin
+            {t('auth.loginDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-posta</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="ornek@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
@@ -146,12 +148,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Şifre</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Şifrenizi girin"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -198,7 +200,7 @@ export default function LoginPage() {
               className="w-full"
               disabled={loading || !captchaToken}
             >
-              {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
+              {loading ? t('auth.loggingIn') : t('auth.login')}
             </Button>
           </form>
         </CardContent>
