@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
+import { useI18n } from "@/contexts/i18n-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +35,7 @@ interface Firma {
 
 export default function MagazalarPage() {
   const { userRole } = useAuth()
+  const { t } = useI18n()
   const [magazalar, setMagazalar] = useState<Magaza[]>([])
   const [firmalar, setFirmalar] = useState<Firma[]>([])
   const [loading, setLoading] = useState(true)
@@ -100,11 +102,11 @@ export default function MagazalarPage() {
       if (editingMagaza) {
         const { error } = await supabase.from("magazalar").update(dataToSave).eq("id", editingMagaza.id)
         if (error) throw error
-        setMessage("Mağaza başarıyla güncellendi!")
+        setMessage(t("stores.updateSuccess"))
       } else {
         const { error } = await supabase.from("magazalar").insert(dataToSave)
         if (error) throw error
-        setMessage("Mağaza başarıyla eklendi!")
+        setMessage(t("stores.addSuccess"))
       }
 
       setIsDialogOpen(false)
@@ -115,7 +117,7 @@ export default function MagazalarPage() {
       setTimeout(() => setMessage(""), 3000)
     } catch (error: any) {
       console.error("Error saving magaza:", error)
-      setMessage(`Hata: ${error.message}`)
+      setMessage(`${t("stores.error")}: ${error.message}`)
     }
   }
 
@@ -133,22 +135,22 @@ export default function MagazalarPage() {
 
   const handleDelete = async (id: number) => {
     if (userRole !== "admin") {
-      setMessage("Bu işlemi yapmaya yetkiniz yok.")
+      setMessage(t("stores.noPermission"))
       setTimeout(() => setMessage(""), 3000)
       return
     }
-    if (!confirm("Bu mağazayı silmek istediğinizden emin misiniz?")) return
+    if (!confirm(t("stores.deleteConfirm"))) return
 
     try {
       const { error } = await supabase.from("magazalar").delete().eq("id", id)
       if (error) throw error
 
-      setMessage("Mağaza başarıyla silindi!")
+      setMessage(t("stores.deleteSuccess"))
       fetchData()
       setTimeout(() => setMessage(""), 3000)
     } catch (error: any) {
       console.error("Error deleting magaza:", error)
-      setMessage(`Silme hatası: ${error.message}`)
+      setMessage(`${t("stores.deleteError")}: ${error.message}`)
     }
   }
 
@@ -162,26 +164,26 @@ export default function MagazalarPage() {
     return (
       <div className="p-6">
         <Alert variant="destructive">
-          <AlertDescription>Bu sayfaya erişim yetkiniz yok.</AlertDescription>
+          <AlertDescription>{t("access.noPermission")}</AlertDescription>
         </Alert>
       </div>
     )
   }
 
   if (loading) {
-    return <div>Yükleniyor...</div>
+    return <div>{t("common.loading")}</div>
   }
 
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Mağazalar</h1>
-          <p className="text-gray-600">Mağaza bilgilerini yönetin</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t("stores.title")}</h1>
+          <p className="text-gray-600">{t("stores.subtitle")}</p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="w-4 h-4 mr-2" />
-          Yeni Mağaza
+          {t("stores.addNew")}
         </Button>
       </div>
 
@@ -193,19 +195,21 @@ export default function MagazalarPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mağaza Listesi ({magazalar.length})</CardTitle>
+          <CardTitle>
+            {t("stores.list")} ({magazalar.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mağaza Adı</TableHead>
-                  <TableHead>Firma</TableHead>
-                  <TableHead>İl</TableHead>
-                  <TableHead>İlçe</TableHead>
-                  <TableHead>Sektör</TableHead>
-                  <TableHead>İşlemler</TableHead>
+                  <TableHead>{t("stores.name")}</TableHead>
+                  <TableHead>{t("stores.company")}</TableHead>
+                  <TableHead>{t("stores.city")}</TableHead>
+                  <TableHead>{t("stores.district")}</TableHead>
+                  <TableHead>{t("stores.sector")}</TableHead>
+                  <TableHead>{t("common.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -240,11 +244,11 @@ export default function MagazalarPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingMagaza ? "Mağaza Düzenle" : "Yeni Mağaza Ekle"}</DialogTitle>
+            <DialogTitle>{editingMagaza ? t("stores.edit") : t("stores.addTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="magaza_adi">Mağaza Adı *</Label>
+              <Label htmlFor="magaza_adi">{t("stores.name")} *</Label>
               <Input
                 id="magaza_adi"
                 value={formData.magaza_adi}
@@ -253,16 +257,16 @@ export default function MagazalarPage() {
               />
             </div>
             <div>
-              <Label htmlFor="firma_id">Firma</Label>
+              <Label htmlFor="firma_id">{t("stores.company")}</Label>
               <Select
                 value={formData.firma_id}
                 onValueChange={(value) => setFormData({ ...formData, firma_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Firma seçin" />
+                  <SelectValue placeholder={t("stores.selectCompany")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="default">Firma Seçilmedi</SelectItem>
+                  <SelectItem value="default">{t("stores.noCompanySelected")}</SelectItem>
                   {firmalar.map((firma) => (
                     <SelectItem key={firma.id} value={firma.id.toString()}>
                       {firma.firma_adi}
@@ -272,37 +276,37 @@ export default function MagazalarPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="il">İl</Label>
+              <Label htmlFor="il">{t("stores.city")}</Label>
               <Input
                 id="il"
                 value={formData.il}
                 onChange={(e) => setFormData({ ...formData, il: e.target.value })}
-                placeholder="Örn: İstanbul"
+                placeholder={t("stores.cityPlaceholder")}
               />
             </div>
             <div>
-              <Label htmlFor="ilce">İlçe</Label>
+              <Label htmlFor="ilce">{t("stores.district")}</Label>
               <Input
                 id="ilce"
                 value={formData.ilce}
                 onChange={(e) => setFormData({ ...formData, ilce: e.target.value })}
-                placeholder="Örn: Beyoğlu"
+                placeholder={t("stores.districtPlaceholder")}
               />
             </div>
             <div>
-              <Label htmlFor="sektor">Sektör</Label>
+              <Label htmlFor="sektor">{t("stores.sector")}</Label>
               <Input
                 id="sektor"
                 value={formData.sektor}
                 onChange={(e) => setFormData({ ...formData, sektor: e.target.value })}
-                placeholder="Örn: Turizm"
+                placeholder={t("stores.sectorPlaceholder")}
               />
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                İptal
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">{editingMagaza ? "Güncelle" : "Ekle"}</Button>
+              <Button type="submit">{editingMagaza ? t("common.update") : t("common.add")}</Button>
             </div>
           </form>
         </DialogContent>

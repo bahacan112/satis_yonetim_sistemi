@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/contexts/i18n-context";
 
 // Sayıya güvenli dönüşüm – null, undefined veya string ise 0 döner
 const toNumber = (v: unknown) =>
@@ -107,8 +108,9 @@ type CombinedDetailRow =
 export default function MagazaDetayPage() {
   const router = useRouter();
   const { magazaId } = useParams<{ magazaId: string }>();
+  const { t, language } = useI18n();
 
-  const [magazaAdi, setMagazaAdi] = useState<string>("Yükleniyor...");
+  const [magazaAdi, setMagazaAdi] = useState<string>(t("accounting.loading"));
   const [onaylananSalesAndTahsilat, setOnaylananSalesAndTahsilat] = useState<
     CombinedDetailRow[]
   >([]);
@@ -151,7 +153,9 @@ export default function MagazaDetayPage() {
       setMagazaAdi(data?.magaza_adi || "Bilinmeyen Mağaza");
     } catch (error: any) {
       console.error("Error fetching magaza adi:", error.message);
-      setDetailMessage(`Mağaza adı yüklenirken hata: ${error.message}`);
+      setDetailMessage(
+        `${t("accounting.storeNameLoadingError")} ${error.message}`
+      );
     }
   };
 
@@ -477,7 +481,9 @@ export default function MagazaDetayPage() {
       });
     } catch (error: any) {
       console.error("Error fetching magaza detayları:", error.message);
-      setDetailMessage(`Detaylar yüklenirken hata: ${error.message}`);
+      setDetailMessage(
+        `${t("accounting.detailsLoadingError")} ${error.message}`
+      );
     } finally {
       setLoadingDetails(false);
     }
@@ -498,7 +504,7 @@ export default function MagazaDetayPage() {
           .eq("id", formData.id);
 
         if (error) throw error;
-        setDetailMessage("Tahsilat başarıyla güncellendi!");
+        setDetailMessage(t("accounting.collectionUpdatedSuccess"));
       } else {
         const { error } = await supabase.from("tahsilatlar").insert({
           magaza_id: formData.magaza_id,
@@ -509,14 +515,14 @@ export default function MagazaDetayPage() {
         });
 
         if (error) throw error;
-        setDetailMessage("Tahsilat başarıyla eklendi!");
+        setDetailMessage(t("accounting.collectionAddedSuccess"));
       }
       fetchMagazaDetaylari(magazaId, startDate, endDate);
       setIsTahsilatFormOpen(false);
       setTimeout(() => setDetailMessage(""), 3000);
     } catch (error: any) {
       console.error("Error submitting tahsilat:", error.message);
-      setDetailMessage(`Tahsilat işlemi sırasında hata: ${error.message}`);
+      setDetailMessage(`${t("accounting.collectionError")} ${error.message}`);
     }
   };
 
@@ -540,12 +546,14 @@ export default function MagazaDetayPage() {
         .delete()
         .eq("id", tahsilatId);
       if (error) throw error;
-      setDetailMessage("Tahsilat başarıyla silindi!");
+      setDetailMessage(t("accounting.collectionDeletedSuccess"));
       fetchMagazaDetaylari(magazaId, startDate, endDate);
       setTimeout(() => setDetailMessage(""), 3000);
     } catch (error: any) {
       console.error("Error deleting tahsilat:", error.message);
-      setDetailMessage(`Tahsilat silinirken hata: ${error.message}`);
+      setDetailMessage(
+        `${t("accounting.collectionDeleteError")} ${error.message}`
+      );
     }
   };
 
@@ -567,32 +575,36 @@ export default function MagazaDetayPage() {
     try {
       const currentData = combinedDetails;
       if (currentData.length === 0) {
-        setDetailMessage("Dışa aktarılacak veri bulunamadı!");
+        setDetailMessage(t("accounting.noExportData"));
         setTimeout(() => setDetailMessage(""), 3000);
         return;
       }
 
+      const delimiter = ";"; // Change delimiter to semicolon
+
       // CSV Headers - Tur sütunu eklendi
       const headers = [
-        "Tarih",
-        "Tip",
-        "Operatör/Kanal",
-        "Tur",
-        "Grup Pax",
-        "Mağaza Pax",
-        "Rehber",
+        t("accounting.date"),
+        t("accounting.type"),
+        t("accounting.operatorChannel"),
+        t("accounting.tour"),
+        t("accounting.groupPax"),
+        t("accounting.storePax"),
+        t("accounting.guide"),
         ...allProductNames,
-        "Toplam Satış",
-        "Pax Satış Ort.",
-        "Acente Kom.",
-        "Ofis Kom.",
+        t("accounting.totalSalesCol"),
+        t("accounting.paxSalesAvg"),
+        t("accounting.agencyComm"),
+        t("accounting.officeComm"),
       ];
 
       // CSV Rows
       const rows = currentData.map((item) => {
         const row = [
           item.displayDate,
-          item.type === "sale" ? "Satış" : "Tahsilat",
+          item.type === "sale"
+            ? t("accounting.sale")
+            : t("accounting.collection"),
           item.type === "sale"
             ? (item as ProcessedSaleRow).operator_adi || "-"
             : (item as TahsilatDetay).odeme_kanali,
@@ -657,21 +669,22 @@ export default function MagazaDetayPage() {
 
       // Create CSV content
       const csvContent = [headers, ...rows]
-        .map((row) =>
-          row
-            .map((cell) => {
-              // Escape quotes and wrap in quotes if contains comma, quote, or newline
-              const cellStr = String(cell || "");
-              if (
-                cellStr.includes(",") ||
-                cellStr.includes('"') ||
-                cellStr.includes("\n")
-              ) {
-                return `"${cellStr.replace(/"/g, '""')}"`;
-              }
-              return cellStr;
-            })
-            .join(",")
+        .map(
+          (row) =>
+            row
+              .map((cell) => {
+                // Escape quotes and wrap in quotes if contains delimiter, quote, or newline
+                const cellStr = String(cell || "");
+                if (
+                  cellStr.includes(delimiter) ||
+                  cellStr.includes('"') ||
+                  cellStr.includes("\n")
+                ) {
+                  return `"${cellStr.replace(/"/g, '""')}"`;
+                }
+                return cellStr;
+              })
+              .join(delimiter) // Use semicolon as delimiter
         )
         .join("\n");
 
@@ -693,11 +706,11 @@ export default function MagazaDetayPage() {
       link.click();
       document.body.removeChild(link);
 
-      setDetailMessage("CSV dosyası başarıyla indirildi!");
+      setDetailMessage(t("accounting.csvExportSuccess"));
       setTimeout(() => setDetailMessage(""), 3000);
     } catch (error: any) {
       console.error("CSV export error:", error);
-      setDetailMessage(`CSV dışa aktarma hatası: ${error.message}`);
+      setDetailMessage(`${t("accounting.csvExportError")} ${error.message}`);
       setTimeout(() => setDetailMessage(""), 3000);
     }
   };
@@ -793,22 +806,24 @@ export default function MagazaDetayPage() {
 
   const displayPeriod = useMemo(() => {
     if (!startDate && !endDate) {
-      return "Tüm Kayıtlar";
+      return t("accounting.allRecords");
     } else if (startDate && endDate) {
-      return `${format(startDate, "dd.MM.yyyy", { locale: tr })} - ${format(
-        endDate,
-        "dd.MM.yyyy",
-        { locale: tr }
-      )}`;
+      return `${format(startDate, "dd.MM.yyyy", {
+        locale: language === "tr" ? tr : undefined,
+      })} - ${format(endDate, "dd.MM.yyyy", {
+        locale: language === "tr" ? tr : undefined,
+      })}`;
     } else if (startDate) {
       return `${format(startDate, "dd.MM.yyyy", {
-        locale: tr,
-      })} tarihinden itibaren`;
+        locale: language === "tr" ? tr : undefined,
+      })} ${t("accounting.fromDate")}`;
     } else if (endDate) {
-      return `${format(endDate, "dd.MM.yyyy", { locale: tr })} tarihine kadar`;
+      return `${format(endDate, "dd.MM.yyyy", {
+        locale: language === "tr" ? tr : undefined,
+      })} ${t("accounting.toDate")}`;
     }
-    return "Tüm Kayıtlar";
-  }, [startDate, endDate]);
+    return t("accounting.allRecords");
+  }, [startDate, endDate, language, t]);
 
   const clearDates = () => {
     setStartDate(undefined);
@@ -816,7 +831,7 @@ export default function MagazaDetayPage() {
   };
 
   if (loadingDetails) {
-    return <div className="p-6">Detaylar yükleniyor...</div>;
+    return <div className="p-6">{t("accounting.loadingDetails")}</div>;
   }
 
   return (
@@ -825,15 +840,14 @@ export default function MagazaDetayPage() {
         <div className="flex items-center space-x-4">
           <Button variant="outline" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Geri</span>
+            <span className="sr-only">{t("accounting.back")}</span>
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {magazaAdi} Detayları
+              {magazaAdi} {t("accounting.storeDetails")}
             </h1>
             <p className="text-gray-600">
-              Seçilen mağaza için mağaza satış detayları (rehber satışları
-              hariç).
+              {t("accounting.storeDetailsDescription")}
             </p>
           </div>
         </div>
@@ -843,7 +857,7 @@ export default function MagazaDetayPage() {
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <Download className="w-4 h-4 mr-2" />
-            CSV Dışa Aktar
+            {t("accounting.csvExport")}
           </Button>
           {selectedTab === "onaylandı" && (
             <Button
@@ -859,7 +873,7 @@ export default function MagazaDetayPage() {
                 setIsTahsilatFormOpen(true);
               }}
             >
-              Yeni Tahsilat Ekle
+              {t("accounting.newCollection")}
             </Button>
           )}
         </div>
@@ -873,7 +887,7 @@ export default function MagazaDetayPage() {
 
       <div className="flex items-center space-x-4 mb-4">
         <div className="flex items-center space-x-2">
-          <Label>Başlangıç Tarihi:</Label>
+          <Label>{t("accounting.startDate")}:</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -885,8 +899,10 @@ export default function MagazaDetayPage() {
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {startDate
-                  ? format(startDate, "dd.MM.yyyy", { locale: tr })
-                  : "Tarih seçin"}
+                  ? format(startDate, "dd.MM.yyyy", {
+                      locale: language === "tr" ? tr : undefined,
+                    })
+                  : t("accounting.selectDate")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -901,7 +917,7 @@ export default function MagazaDetayPage() {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Label>Bitiş Tarihi:</Label>
+          <Label>{t("accounting.endDate")}:</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -913,8 +929,10 @@ export default function MagazaDetayPage() {
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {endDate
-                  ? format(endDate, "dd.MM.yyyy", { locale: tr })
-                  : "Tarih seçin"}
+                  ? format(endDate, "dd.MM.yyyy", {
+                      locale: language === "tr" ? tr : undefined,
+                    })
+                  : t("accounting.selectDate")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -929,7 +947,7 @@ export default function MagazaDetayPage() {
         </div>
 
         <Button variant="outline" onClick={clearDates}>
-          Tarihleri Temizle
+          {t("accounting.clearDates")}
         </Button>
       </div>
 
@@ -941,38 +959,50 @@ export default function MagazaDetayPage() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="onaylandı">Onaylanan Satışlar</TabsTrigger>
-          <TabsTrigger value="iptal">İptal Edilen Satışlar</TabsTrigger>
-          <TabsTrigger value="bekleyen">Bekleyen Satışlar</TabsTrigger>
+          <TabsTrigger value="onaylandı">
+            {t("accounting.approvedSalesTab")}
+          </TabsTrigger>
+          <TabsTrigger value="iptal">
+            {t("accounting.cancelledSalesTab")}
+          </TabsTrigger>
+          <TabsTrigger value="bekleyen">
+            {t("accounting.pendingSalesTab")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="onaylandı">
           <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle>
-                Onaylanan Mağaza Satışları Özeti ({displayPeriod})
+                {t("accounting.approvedStoreSalesSummary")} ({displayPeriod})
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-4 gap-4 mb-4">
               <div className="text-center">
-                <div className="text-sm text-gray-500">Toplam Satış Tutarı</div>
+                <div className="text-sm text-gray-500">
+                  {t("accounting.totalSalesAmount")}
+                </div>
                 <div className="text-lg font-bold">
                   €{toNumber(onaylananTotalSalesAmount).toFixed(2)}
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-sm text-gray-500">Toplam Grup Pax</div>
+                <div className="text-sm text-gray-500">
+                  {t("accounting.totalGroupPax")}
+                </div>
                 <div className="text-lg font-bold">{onaylananTotalGrupPax}</div>
               </div>
               <div className="text-center">
-                <div className="text-sm text-gray-500">Toplam Mağaza Pax</div>
+                <div className="text-sm text-gray-500">
+                  {t("accounting.totalStorePax")}
+                </div>
                 <div className="text-lg font-bold">
                   {onaylananTotalMagazaPax}
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Pax Satış Ortalaması
+                  {t("accounting.paxSalesAverage")}
                 </div>
                 <div className="text-lg font-bold">
                   €
@@ -986,7 +1016,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Acente Komisyonu
+                  {t("accounting.totalAgencyCommission")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(onaylananTotalAcenteKomisyon).toFixed(2)}
@@ -994,7 +1024,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Ofis Komisyonu
+                  {t("accounting.totalOfficeCommission")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(onaylananTotalOfisKomisyon).toFixed(2)}
@@ -1002,7 +1032,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Tahsilat Acente Payı
+                  {t("accounting.totalCollectionAgencyShare")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(onaylananTotalTahsilatAcentePayi).toFixed(2)}
@@ -1010,7 +1040,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Tahsilat Ofis Payı
+                  {t("accounting.totalCollectionOfficeShare")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(onaylananTotalTahsilatOfisPayi).toFixed(2)}
@@ -1018,7 +1048,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Kalan Acente Alacağı
+                  {t("accounting.remainingAgencyReceivable")}
                 </div>
                 <div className="text-lg font-bold">
                   €
@@ -1029,7 +1059,9 @@ export default function MagazaDetayPage() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-sm text-gray-500">Kalan Ofis Alacağı</div>
+                <div className="text-sm text-gray-500">
+                  {t("accounting.remainingOfficeReceivable")}
+                </div>
                 <div className="text-lg font-bold">
                   €
                   {(
@@ -1044,21 +1076,23 @@ export default function MagazaDetayPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Tarih</TableHead>
-                      <TableHead>Tip</TableHead>
-                      <TableHead>Operatör/Kanal</TableHead>
-                      <TableHead>Tur</TableHead>
-                      <TableHead>Grup Pax</TableHead>
-                      <TableHead>Mağaza Pax</TableHead>
-                      <TableHead>Rehber</TableHead>
+                      <TableHead>{t("accounting.date")}</TableHead>
+                      <TableHead>{t("accounting.type")}</TableHead>
+                      <TableHead>{t("accounting.operatorChannel")}</TableHead>
+                      <TableHead>{t("accounting.tour")}</TableHead>
+                      <TableHead>{t("accounting.groupPax")}</TableHead>
+                      <TableHead>{t("accounting.storePax")}</TableHead>
+                      <TableHead>{t("accounting.guide")}</TableHead>
                       {allProductNames.map((productName) => (
                         <TableHead key={productName}>{productName}</TableHead>
                       ))}
-                      <TableHead>Toplam Satış</TableHead>
-                      <TableHead>Pax Satış Ort.</TableHead>
-                      <TableHead>Acente Kom.</TableHead>
-                      <TableHead>Ofis Kom.</TableHead>
-                      <TableHead className="text-right">İşlemler</TableHead>
+                      <TableHead>{t("accounting.totalSalesCol")}</TableHead>
+                      <TableHead>{t("accounting.paxSalesAvg")}</TableHead>
+                      <TableHead>{t("accounting.agencyComm")}</TableHead>
+                      <TableHead>{t("accounting.officeComm")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("accounting.actions")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1068,7 +1102,7 @@ export default function MagazaDetayPage() {
                           colSpan={7 + allProductNames.length + 5}
                           className="text-center text-gray-500"
                         >
-                          Bu dönem için detay bulunmamaktadır.
+                          {t("accounting.noDetailsFound")}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1076,7 +1110,7 @@ export default function MagazaDetayPage() {
                         item.type === "sale" ? (
                           <TableRow key={`sale-${item.satis_id}-${index}`}>
                             <TableCell>{item.displayDate}</TableCell>
-                            <TableCell>Satış</TableCell>
+                            <TableCell>{t("accounting.sale")}</TableCell>
                             <TableCell>{item.operator_adi}</TableCell>
                             <TableCell>{item.tur_adi}</TableCell>
                             <TableCell>{item.grup_pax || "-"}</TableCell>
@@ -1115,7 +1149,7 @@ export default function MagazaDetayPage() {
                             className="bg-green-50/50"
                           >
                             <TableCell>{item.displayDate}</TableCell>
-                            <TableCell>Tahsilat</TableCell>
+                            <TableCell>{t("accounting.collection")}</TableCell>
                             <TableCell>{item.odeme_kanali}</TableCell>
                             <TableCell>{/* Tur for tahsilat */}</TableCell>
                             <TableCell>{/* Grup Pax for tahsilat */}</TableCell>
@@ -1140,7 +1174,9 @@ export default function MagazaDetayPage() {
                                 className="mr-2"
                               >
                                 <Edit className="w-4 h-4" />
-                                <span className="sr-only">Düzenle</span>
+                                <span className="sr-only">
+                                  {t("common.edit")}
+                                </span>
                               </Button>
                               <Button
                                 variant="ghost"
@@ -1148,7 +1184,9 @@ export default function MagazaDetayPage() {
                                 onClick={() => confirmDelete(item.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
-                                <span className="sr-only">Sil</span>
+                                <span className="sr-only">
+                                  {t("common.delete")}
+                                </span>
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -1166,13 +1204,13 @@ export default function MagazaDetayPage() {
           <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle>
-                İptal Edilen Mağaza Satışları Özeti ({displayPeriod})
+                {t("accounting.cancelledStoreSalesSummary")} ({displayPeriod})
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-3 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam İptal Satış Tutarı
+                  {t("accounting.totalCancelledSalesAmount")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(iptalTotalSalesAmount).toFixed(2)}
@@ -1180,19 +1218,19 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam İptal Grup Pax
+                  {t("accounting.totalCancelledGroupPax")}
                 </div>
                 <div className="text-lg font-bold">{iptalTotalGrupPax}</div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam İptal Mağaza Pax
+                  {t("accounting.totalCancelledStorePax")}
                 </div>
                 <div className="text-lg font-bold">{iptalTotalMagazaPax}</div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Pax Satış Ortalaması
+                  {t("accounting.paxSalesAverage")}
                 </div>
                 <div className="text-lg font-bold">
                   €
@@ -1205,7 +1243,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam İptal Acente Komisyonu
+                  {t("accounting.totalCancelledAgencyCommission")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(iptalTotalAcenteKomisyon).toFixed(2)}
@@ -1213,7 +1251,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam İptal Ofis Komisyonu
+                  {t("accounting.totalCancelledOfficeCommission")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(iptalTotalOfisKomisyon).toFixed(2)}
@@ -1225,19 +1263,19 @@ export default function MagazaDetayPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Tarih</TableHead>
-                      <TableHead>Operatör</TableHead>
-                      <TableHead>Tur</TableHead>
-                      <TableHead>Grup Pax</TableHead>
-                      <TableHead>Mağaza Pax</TableHead>
-                      <TableHead>Rehber</TableHead>
+                      <TableHead>{t("accounting.date")}</TableHead>
+                      <TableHead>{t("accounting.operator")}</TableHead>
+                      <TableHead>{t("accounting.tour")}</TableHead>
+                      <TableHead>{t("accounting.groupPax")}</TableHead>
+                      <TableHead>{t("accounting.storePax")}</TableHead>
+                      <TableHead>{t("accounting.guide")}</TableHead>
                       {allProductNames.map((productName) => (
                         <TableHead key={productName}>{productName}</TableHead>
                       ))}
-                      <TableHead>Toplam Satış</TableHead>
-                      <TableHead>Pax Satış Ort.</TableHead>
-                      <TableHead>Acente Kom.</TableHead>
-                      <TableHead>Ofis Kom.</TableHead>
+                      <TableHead>{t("accounting.totalSalesCol")}</TableHead>
+                      <TableHead>{t("accounting.paxSalesAvg")}</TableHead>
+                      <TableHead>{t("accounting.agencyComm")}</TableHead>
+                      <TableHead>{t("accounting.officeComm")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1247,7 +1285,7 @@ export default function MagazaDetayPage() {
                           colSpan={7 + allProductNames.length + 2}
                           className="text-center text-gray-500"
                         >
-                          Bu dönem için iptal edilen satış bulunmamaktadır.
+                          {t("accounting.noCancelledSalesFound")}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1308,13 +1346,13 @@ export default function MagazaDetayPage() {
           <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle>
-                Bekleyen Mağaza Satışları Özeti ({displayPeriod})
+                {t("accounting.pendingStoreSalesSummary")} ({displayPeriod})
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-3 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Bekleyen Satış Tutarı
+                  {t("accounting.totalPendingSalesAmount")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(bekleyenTotalSalesAmount).toFixed(2)}
@@ -1322,13 +1360,13 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Bekleyen Grup Pax
+                  {t("accounting.totalPendingGroupPax")}
                 </div>
                 <div className="text-lg font-bold">{bekleyenTotalGrupPax}</div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Bekleyen Mağaza Pax
+                  {t("accounting.totalPendingStorePax")}
                 </div>
                 <div className="text-lg font-bold">
                   {bekleyenTotalMagazaPax}
@@ -1336,7 +1374,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Pax Satış Ortalaması
+                  {t("accounting.paxSalesAverage")}
                 </div>
                 <div className="text-lg font-bold">
                   €
@@ -1350,7 +1388,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Bekleyen Acente Komisyonu
+                  {t("accounting.totalPendingAgencyCommission")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(bekleyenTotalAcenteKomisyon).toFixed(2)}
@@ -1358,7 +1396,7 @@ export default function MagazaDetayPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-500">
-                  Toplam Bekleyen Ofis Komisyonu
+                  {t("accounting.totalPendingOfficeCommission")}
                 </div>
                 <div className="text-lg font-bold">
                   €{toNumber(bekleyenTotalOfisKomisyon).toFixed(2)}
@@ -1370,19 +1408,19 @@ export default function MagazaDetayPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Tarih</TableHead>
-                      <TableHead>Operatör</TableHead>
-                      <TableHead>Tur</TableHead>
-                      <TableHead>Grup Pax</TableHead>
-                      <TableHead>Mağaza Pax</TableHead>
-                      <TableHead>Rehber</TableHead>
+                      <TableHead>{t("accounting.date")}</TableHead>
+                      <TableHead>{t("accounting.operator")}</TableHead>
+                      <TableHead>{t("accounting.tour")}</TableHead>
+                      <TableHead>{t("accounting.groupPax")}</TableHead>
+                      <TableHead>{t("accounting.storePax")}</TableHead>
+                      <TableHead>{t("accounting.guide")}</TableHead>
                       {allProductNames.map((productName) => (
                         <TableHead key={productName}>{productName}</TableHead>
                       ))}
-                      <TableHead>Toplam Satış</TableHead>
-                      <TableHead>Pax Satış Ort.</TableHead>
-                      <TableHead>Acente Kom.</TableHead>
-                      <TableHead>Ofis Kom.</TableHead>
+                      <TableHead>{t("accounting.totalSalesCol")}</TableHead>
+                      <TableHead>{t("accounting.paxSalesAvg")}</TableHead>
+                      <TableHead>{t("accounting.agencyComm")}</TableHead>
+                      <TableHead>{t("accounting.officeComm")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1392,7 +1430,7 @@ export default function MagazaDetayPage() {
                           colSpan={7 + allProductNames.length + 2}
                           className="text-center text-gray-500"
                         >
-                          Bu dönem için bekleyen satış bulunmamaktadır.
+                          {t("accounting.noPendingSalesFound")}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1464,17 +1502,19 @@ export default function MagazaDetayPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Tahsilatı Silmek İstediğinizden Emin Misiniz?
+              {t("accounting.deleteCollectionConfirm")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Bu işlem geri alınamaz. Tahsilat kaydı kalıcı olarak silinecektir.
+              {t("accounting.deleteCollectionDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setShowDeleteConfirm(false)}>
-              İptal
+              {t("common.cancel")}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={executeDelete}>Sil</AlertDialogAction>
+            <AlertDialogAction onClick={executeDelete}>
+              {t("common.delete")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

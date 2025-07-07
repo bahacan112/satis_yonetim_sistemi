@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
+import { useI18n } from "@/contexts/i18n-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +26,7 @@ interface Firma {
 
 export default function FirmalarPage() {
   const { userRole } = useAuth()
+  const { t } = useI18n()
   const [firmalar, setFirmalar] = useState<Firma[]>([])
   const [loading, setLoading] = useState(true)
   const [editingFirma, setEditingFirma] = useState<Firma | null>(null)
@@ -69,7 +71,7 @@ export default function FirmalarPage() {
           .eq("id", editingFirma.id)
 
         if (error) throw error
-        setMessage("Firma başarıyla güncellendi!")
+        setMessage(t("companies.updateSuccess"))
       } else {
         // Yeni ekleme
         const { error } = await supabase.from("firmalar").insert({
@@ -79,7 +81,7 @@ export default function FirmalarPage() {
         })
 
         if (error) throw error
-        setMessage("Firma başarıyla eklendi!")
+        setMessage(t("companies.addSuccess"))
       }
 
       setIsDialogOpen(false)
@@ -90,7 +92,7 @@ export default function FirmalarPage() {
       setTimeout(() => setMessage(""), 3000)
     } catch (error: any) {
       console.error("Error saving firma:", error)
-      setMessage(`Hata: ${error.message}`)
+      setMessage(`${t("companies.error")}: ${error.message}`)
     }
   }
 
@@ -106,24 +108,24 @@ export default function FirmalarPage() {
 
   const handleDelete = async (id: number) => {
     if (userRole !== "admin") {
-      setMessage("Bu işlemi yapmaya yetkiniz yok.")
+      setMessage(t("companies.noPermission"))
       setTimeout(() => setMessage(""), 3000)
       return
     }
-    if (!confirm("Bu firmayı silmek istediğinizden emin misiniz?")) return
+    if (!confirm(t("companies.deleteConfirm"))) return
 
     try {
       const { error } = await supabase.from("firmalar").delete().eq("id", id)
 
       if (error) throw error
 
-      setMessage("Firma başarıyla silindi!")
+      setMessage(t("companies.deleteSuccess"))
       fetchFirmalar()
 
       setTimeout(() => setMessage(""), 3000)
     } catch (error: any) {
       console.error("Error deleting firma:", error)
-      setMessage(`Silme hatası: ${error.message}`)
+      setMessage(`${t("companies.deleteError")}: ${error.message}`)
     }
   }
 
@@ -137,26 +139,26 @@ export default function FirmalarPage() {
     return (
       <div className="p-6">
         <Alert variant="destructive">
-          <AlertDescription>Bu sayfaya erişim yetkiniz yok.</AlertDescription>
+          <AlertDescription>{t("access.noPermission")}</AlertDescription>
         </Alert>
       </div>
     )
   }
 
   if (loading) {
-    return <div>Yükleniyor...</div>
+    return <div>{t("common.loading")}</div>
   }
 
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Firmalar</h1>
-          <p className="text-gray-600">Firma bilgilerini yönetin</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t("companies.title")}</h1>
+          <p className="text-gray-600">{t("companies.subtitle")}</p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="w-4 h-4 mr-2" />
-          Yeni Firma
+          {t("companies.addNew")}
         </Button>
       </div>
 
@@ -168,18 +170,20 @@ export default function FirmalarPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Firma Listesi ({firmalar.length})</CardTitle>
+          <CardTitle>
+            {t("companies.list")} ({firmalar.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Firma Adı</TableHead>
-                  <TableHead>İl</TableHead>
-                  <TableHead>Sektör</TableHead>
-                  <TableHead>Kayıt Tarihi</TableHead>
-                  <TableHead>İşlemler</TableHead>
+                  <TableHead>{t("companies.name")}</TableHead>
+                  <TableHead>{t("companies.city")}</TableHead>
+                  <TableHead>{t("companies.sector")}</TableHead>
+                  <TableHead>{t("companies.registrationDate")}</TableHead>
+                  <TableHead>{t("common.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -215,11 +219,11 @@ export default function FirmalarPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingFirma ? "Firma Düzenle" : "Yeni Firma Ekle"}</DialogTitle>
+            <DialogTitle>{editingFirma ? t("companies.edit") : t("companies.addTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="firma_adi">Firma Adı *</Label>
+              <Label htmlFor="firma_adi">{t("companies.name")} *</Label>
               <Input
                 id="firma_adi"
                 value={formData.firma_adi}
@@ -228,28 +232,28 @@ export default function FirmalarPage() {
               />
             </div>
             <div>
-              <Label htmlFor="il">İl</Label>
+              <Label htmlFor="il">{t("companies.city")}</Label>
               <Input
                 id="il"
                 value={formData.il}
                 onChange={(e) => setFormData({ ...formData, il: e.target.value })}
-                placeholder="Örn: İstanbul"
+                placeholder={t("companies.cityPlaceholder")}
               />
             </div>
             <div>
-              <Label htmlFor="sektor">Sektör</Label>
+              <Label htmlFor="sektor">{t("companies.sector")}</Label>
               <Input
                 id="sektor"
                 value={formData.sektor}
                 onChange={(e) => setFormData({ ...formData, sektor: e.target.value })}
-                placeholder="Örn: Turizm"
+                placeholder={t("companies.sectorPlaceholder")}
               />
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                İptal
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">{editingFirma ? "Güncelle" : "Ekle"}</Button>
+              <Button type="submit">{editingFirma ? t("common.update") : t("common.add")}</Button>
             </div>
           </form>
         </DialogContent>

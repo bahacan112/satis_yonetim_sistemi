@@ -52,6 +52,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { SalesListDialog } from "@/components/dialogs/sales-list-dialog";
+import { redirect } from "next/navigation"; // redirect import edildi
 
 interface SalesItem {
   id: string;
@@ -532,6 +533,11 @@ export default function DashboardPage() {
     );
   }
 
+  // Standart kullanıcılar için yönlendirme
+  if (userRole === "standart") {
+    redirect("/dashboard/satislar");
+  }
+
   // Sıralanmış satış listelerini al
   const sortedPendingSales = sortSales(
     pendingSales,
@@ -544,7 +550,7 @@ export default function DashboardPage() {
     cancelledSortDirection
   );
 
-  // Admin ve standart kullanıcılar için yeni dashboard
+  // Admin kullanıcılar için ana dashboard
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -645,7 +651,7 @@ export default function DashboardPage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-[140px] justify-start text-left font-normal"
+                    className="w-[140px] justify-start text-left font-normal bg-transparent"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(salesDateRange.from, "dd/MM/yyyy")}
@@ -668,7 +674,7 @@ export default function DashboardPage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-[140px] justify-start text-left font-normal"
+                    className="w-[140px] justify-start text-left font-normal bg-transparent"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(salesDateRange.to, "dd/MM/yyyy")}
@@ -740,7 +746,7 @@ export default function DashboardPage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-[140px] justify-start text-left font-normal"
+                    className="w-[140px] justify-start text-left font-normal bg-transparent"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(commissionDateRange.from, "dd/MM/yyyy")}
@@ -766,7 +772,7 @@ export default function DashboardPage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-[140px] justify-start text-left font-normal"
+                    className="w-[140px] justify-start text-left font-normal bg-transparent"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(commissionDateRange.to, "dd/MM/yyyy")}

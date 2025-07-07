@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
+import { useI18n } from "@/contexts/i18n-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -40,6 +41,7 @@ interface Notification {
 
 export default function BildirimlerPage() {
   const { userRole, user } = useAuth();
+  const { t } = useI18n();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
@@ -93,8 +95,8 @@ export default function BildirimlerPage() {
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast({
-        title: "Hata!",
-        description: "Bildirimler yüklenirken hata oluştu.",
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     } finally {
@@ -134,16 +136,16 @@ export default function BildirimlerPage() {
 
       setEmailNotifications(enabled);
       toast({
-        title: "Başarılı!",
+        title: t("common.success"),
         description: enabled
-          ? "E-posta bildirimleri açıldı."
-          : "E-posta bildirimleri kapatıldı.",
+          ? t("notifications.emailNotificationsEnabled")
+          : t("notifications.emailNotificationsDisabled"),
       });
     } catch (error) {
       console.error("Error updating email settings:", error);
       toast({
-        title: "Hata!",
-        description: "E-posta ayarları güncellenirken hata oluştu.",
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     } finally {
@@ -172,14 +174,14 @@ export default function BildirimlerPage() {
       }
 
       toast({
-        title: "Başarılı!",
-        description: "Bildirim okundu olarak işaretlendi.",
+        title: t("common.success"),
+        description: t("notifications.markReadSuccess"),
       });
     } catch (error) {
       console.error("Error marking notification as read:", error);
       toast({
-        title: "Hata!",
-        description: "Bildirim güncellenirken hata oluştu.",
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     }
@@ -206,21 +208,21 @@ export default function BildirimlerPage() {
       }
 
       toast({
-        title: "Başarılı!",
-        description: "Bildirim okunmadı olarak işaretlendi.",
+        title: t("common.success"),
+        description: t("notifications.markUnreadSuccess"),
       });
     } catch (error) {
       console.error("Error marking notification as unread:", error);
       toast({
-        title: "Hata!",
-        description: "Bildirim güncellenirken hata oluştu.",
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     }
   };
 
   const deleteNotification = async (id: string) => {
-    if (!confirm("Bu bildirimi silmek istediğinizden emin misiniz?")) return;
+    if (!confirm(t("notifications.deleteConfirm"))) return;
 
     try {
       const { error } = await supabase
@@ -237,14 +239,14 @@ export default function BildirimlerPage() {
       }
 
       toast({
-        title: "Başarılı!",
-        description: "Bildirim silindi.",
+        title: t("common.success"),
+        description: t("notifications.deleteSuccess"),
       });
     } catch (error) {
       console.error("Error deleting notification:", error);
       toast({
-        title: "Hata!",
-        description: "Bildirim silinirken hata oluştu.",
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     }
@@ -270,14 +272,14 @@ export default function BildirimlerPage() {
       }
 
       toast({
-        title: "Başarılı!",
-        description: "Tüm bildirimler okundu olarak işaretlendi.",
+        title: t("common.success"),
+        description: t("notifications.markAllReadSuccess"),
       });
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
       toast({
-        title: "Hata!",
-        description: "Bildirimler güncellenirken hata oluştu.",
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     }
@@ -286,9 +288,9 @@ export default function BildirimlerPage() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "sales_update":
-        return "Satış Güncelleme";
+        return t("notifications.salesUpdate");
       case "general":
-        return "Genel";
+        return t("notifications.general");
       default:
         return type;
     }
@@ -326,7 +328,7 @@ export default function BildirimlerPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p>Yükleniyor...</p>
+          <p>{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -339,22 +341,27 @@ export default function BildirimlerPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Bell className="w-6 h-6 sm:w-8 sm:h-8" />
-            Bildirimler
+            {t("notifications.title")}
             {unreadCount > 0 && (
               <Badge variant="destructive" className="ml-2">
-                {unreadCount} okunmamış
+                {t("notifications.unreadCount").replace(
+                  "{count}",
+                  unreadCount.toString()
+                )}
               </Badge>
             )}
           </h1>
           <p className="text-gray-600 text-sm sm:text-base">
-            Sistem bildirimleri ve güncellemeler
+            {t("notifications.subtitle")}
           </p>
         </div>
 
         {/* Email Notifications Toggle */}
         <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
           <Mail className="w-4 h-4 text-gray-600" />
-          <span className="text-sm font-medium">E-posta Bildirimleri</span>
+          <span className="text-sm font-medium">
+            {t("notifications.emailNotifications")}
+          </span>
           <Switch
             checked={emailNotifications}
             onCheckedChange={toggleEmailNotifications}
@@ -373,7 +380,7 @@ export default function BildirimlerPage() {
               filter === "all" ? "bg-blue-50 border-blue-200" : ""
             }`}
           >
-            Tümü ({notifications.length})
+            {t("notifications.all")} ({notifications.length})
           </Button>
           <Button
             variant="outline"
@@ -382,7 +389,7 @@ export default function BildirimlerPage() {
               filter === "unread" ? "bg-blue-50 border-blue-200" : ""
             }`}
           >
-            Okunmamış ({unreadCount})
+            {t("notifications.unread")} ({unreadCount})
           </Button>
           <Button
             variant="outline"
@@ -391,14 +398,14 @@ export default function BildirimlerPage() {
               filter === "read" ? "bg-blue-50 border-blue-200" : ""
             }`}
           >
-            Okunmuş ({notifications.length - unreadCount})
+            {t("notifications.read")} ({notifications.length - unreadCount})
           </Button>
         </div>
 
         {unreadCount > 0 && (
           <Button onClick={markAllAsRead} className="text-xs sm:text-sm">
             <Check className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            Tümünü Okundu İşaretle
+            {t("notifications.markAllRead")}
           </Button>
         )}
       </div>
@@ -407,7 +414,7 @@ export default function BildirimlerPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg sm:text-xl">
-            Bildirim Listesi ({filteredNotifications.length})
+            {t("notifications.list")} ({filteredNotifications.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
@@ -416,10 +423,10 @@ export default function BildirimlerPage() {
               <Alert>
                 <AlertDescription>
                   {filter === "unread"
-                    ? "Okunmamış bildirim bulunmuyor."
+                    ? t("notifications.noUnread")
                     : filter === "read"
-                    ? "Okunmuş bildirim bulunmuyor."
-                    : "Henüz bildirim bulunmuyor."}
+                    ? t("notifications.noRead")
+                    : t("notifications.noNotifications")}
                 </AlertDescription>
               </Alert>
             </div>
@@ -428,16 +435,24 @@ export default function BildirimlerPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Durum</TableHead>
-                    <TableHead className="w-24">Tip</TableHead>
-                    <TableHead className="min-w-[150px]">Başlık</TableHead>
+                    <TableHead className="w-20">
+                      {t("notifications.status")}
+                    </TableHead>
+                    <TableHead className="w-24">
+                      {t("notifications.type")}
+                    </TableHead>
+                    <TableHead className="min-w-[150px]">
+                      {t("notifications.title")}
+                    </TableHead>
                     <TableHead className="min-w-[200px] hidden sm:table-cell">
-                      Mesaj
+                      {t("notifications.message")}
                     </TableHead>
                     <TableHead className="w-32 hidden md:table-cell">
-                      Tarih
+                      {t("notifications.date")}
                     </TableHead>
-                    <TableHead className="w-24">İşlemler</TableHead>
+                    <TableHead className="w-24">
+                      {t("notifications.actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -454,11 +469,11 @@ export default function BildirimlerPage() {
                       <TableCell>
                         {notification.read ? (
                           <Badge variant="secondary" className="text-xs">
-                            Okundu
+                            {t("notifications.readStatus")}
                           </Badge>
                         ) : (
                           <Badge variant="default" className="text-xs">
-                            Yeni
+                            {t("notifications.new")}
                           </Badge>
                         )}
                       </TableCell>
@@ -529,23 +544,29 @@ export default function BildirimlerPage() {
               <DialogTitle className="text-lg sm:text-xl">
                 {selectedNotification.title}
               </DialogTitle>
-              <DialogDescription>Bildirim Detayları</DialogDescription>
+              <DialogDescription>
+                {t("notifications.details")}
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
                 <span className="text-sm font-medium text-gray-500">
-                  Durum:
+                  {t("notifications.status")}:
                 </span>
                 <div className="sm:col-span-3">
                   {selectedNotification.read ? (
-                    <Badge variant="secondary">Okundu</Badge>
+                    <Badge variant="secondary">
+                      {t("notifications.readStatus")}
+                    </Badge>
                   ) : (
-                    <Badge variant="default">Yeni</Badge>
+                    <Badge variant="default">{t("notifications.new")}</Badge>
                   )}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
-                <span className="text-sm font-medium text-gray-500">Tip:</span>
+                <span className="text-sm font-medium text-gray-500">
+                  {t("notifications.type")}:
+                </span>
                 <div className="sm:col-span-3">
                   <Badge
                     variant={getTypeBadgeVariant(selectedNotification.type)}
@@ -556,7 +577,7 @@ export default function BildirimlerPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
                 <span className="text-sm font-medium text-gray-500">
-                  Mesaj:
+                  {t("notifications.message")}:
                 </span>
                 <div className="sm:col-span-3 text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-md">
                   {selectedNotification.message}
@@ -564,7 +585,7 @@ export default function BildirimlerPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
                 <span className="text-sm font-medium text-gray-500">
-                  Tarih:
+                  {t("notifications.date")}:
                 </span>
                 <p className="sm:col-span-3 text-sm text-gray-700">
                   {new Date(selectedNotification.created_at).toLocaleString(
@@ -582,7 +603,7 @@ export default function BildirimlerPage() {
                     className="text-xs sm:text-sm"
                   >
                     <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Okunmadı İşaretle
+                    {t("notifications.markUnread")}
                   </Button>
                 ) : (
                   <Button
@@ -591,7 +612,7 @@ export default function BildirimlerPage() {
                     className="text-xs sm:text-sm"
                   >
                     <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    Okundu İşaretle
+                    {t("notifications.markRead")}
                   </Button>
                 )}
                 <Button
@@ -600,7 +621,7 @@ export default function BildirimlerPage() {
                   className="text-xs sm:text-sm"
                 >
                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  Sil
+                  {t("notifications.delete")}
                 </Button>
               </div>
               <Button
@@ -608,7 +629,7 @@ export default function BildirimlerPage() {
                 onClick={() => setIsDialogOpen(false)}
                 className="text-xs sm:text-sm"
               >
-                Kapat
+                {t("notifications.close")}
               </Button>
             </DialogFooter>
           </DialogContent>
