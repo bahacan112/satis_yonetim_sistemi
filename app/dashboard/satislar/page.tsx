@@ -1,20 +1,39 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import type React from "react"
-import { supabase, type Database } from "@/lib/supabase"
-import { useAuth } from "@/contexts/auth-context"
-import { useI18n } from "@/contexts/i18n-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect } from "react";
+import type React from "react";
+import { supabase, type Database } from "@/lib/supabase";
+import { useAuth } from "@/contexts/auth-context";
+import { useI18n } from "@/contexts/i18n-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Trash2,
   Plus,
@@ -30,154 +49,151 @@ import {
   Clock,
   Eye,
   EyeOff,
-} from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+} from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 // Import dialog components
-import { AddUrunDialog } from "@/components/dialogs/add-urun-dialog"
-import { AddMagazaDialog } from "@/components/dialogs/add-magaza-dialog"
-import { AddOperatorDialog } from "@/components/dialogs/add-operator-dialog"
-import { AddTurDialog } from "@/components/dialogs/add-tur-dialog"
-import { AddFirmaDialog } from "@/components/dialogs/add-firma-dialog"
-import { AddRehberDialog } from "@/components/dialogs/add-rehber-dialog"
+import { AddUrunDialog } from "@/components/dialogs/add-urun-dialog";
+import { AddMagazaDialog } from "@/components/dialogs/add-magaza-dialog";
+import { AddOperatorDialog } from "@/components/dialogs/add-operator-dialog";
+import { AddTurDialog } from "@/components/dialogs/add-tur-dialog";
+import { AddFirmaDialog } from "@/components/dialogs/add-firma-dialog";
+import { AddRehberDialog } from "@/components/dialogs/add-rehber-dialog";
 
 // satislar_detay_view'den gelen veriye uygun arayüz
 interface SatisDetayViewRow {
-  satis_id: string
-  satis_tarihi: string | null
-  grup_gelis_tarihi: string | null
-  magaza_giris_tarihi: string | null
-  grup_pax: number | null
-  magaza_pax: number | null
-  tur: string | null
-  created_at: string
-  operator_adi: string | null
-  rehber_adi: string | null
-  magaza_adi: string | null
-  firma_adi: string | null
-  urun_id: string | null
-  urun_adi: string | null
-  adet: number | null
-  birim_fiyat: number | null
-  acente_komisyonu: number | null
-  rehber_komisyonu: number | null
-  kaptan_komisyonu: number | null
-  ofis_komisyonu: number | null
-  toplam_tutar: number | null
-  bildirim_tipi: "magaza" | "rehber"
-  status: "onaylandı" | "beklemede" | "iptal" | null
-  acente_komisyon_tutari: number | null
-  rehber_komisyon_tutari: number | null
-  kaptan_komisyon_tutari: number | null
-  ofis_komisyon_tutari: number | null
-  rehber_teyyit_edildi: boolean
-  rehber_teyyit_birim_fiyat: number | null
-  rehber_teyyit_adet: number | null
-  rehber_teyyit_toplam_tutar: null
-  satis_aciklamasi: string | null
+  satis_id: string;
+  satis_tarihi: string | null;
+  grup_gelis_tarihi: string | null;
+  magaza_giris_tarihi: string | null;
+  grup_pax: number | null;
+  magaza_pax: number | null;
+  tur: string | null;
+  created_at: string;
+  operator_adi: string | null;
+  rehber_adi: string | null;
+  magaza_adi: string | null;
+  firma_adi: string | null;
+  urun_id: string | null;
+  urun_adi: string | null;
+  adet: number | null;
+  birim_fiyat: number | null;
+  acente_komisyonu: number | null;
+  rehber_komisyonu: number | null;
+  kaptan_komisyonu: number | null;
+  ofis_komisyonu: number | null;
+  toplam_tutar: number | null;
+  bildirim_tipi: "magaza" | "rehber";
+  status: "onaylandı" | "beklemede" | "iptal" | null;
+  acente_komisyon_tutari: number | null;
+  rehber_komisyon_tutari: number | null;
+  kaptan_komisyon_tutari: number | null;
+  ofis_komisyon_tutari: number | null;
+  rehber_teyyit_edildi: boolean;
+  rehber_teyyit_birim_fiyat: number | null;
+  rehber_teyyit_adet: number | null;
+  rehber_teyyit_toplam_tutar: null;
+  satis_aciklamasi: string | null;
 }
 
 interface Operator {
-  id: string
-  operator_adi: string
+  id: string;
+  operator_adi: string;
 }
 
 interface Rehber {
-  id: string
-  rehber_adi: string
+  id: string;
+  rehber_adi: string;
 }
 
 interface Magaza {
-  id: string
-  magaza_adi: string
-  firma_id: string
+  id: string;
+  magaza_adi: string;
+  firma_id: string;
 }
 
 interface Firma {
-  id: string
-  firma_adi: string
+  id: string;
+  firma_adi: string;
 }
 
 interface Tur {
-  id: string
-  tur_adi: string
+  id: string;
+  tur_adi: string;
 }
 
 interface Urun {
-  id: string
-  urun_adi: string
+  id: string;
+  urun_adi: string;
 }
 
 interface MagazaUrun {
-  id: string
-  urun_id: string
-  acente_komisyonu: number
-  rehber_komisyonu: number
-  kaptan_komisyonu: number
-  ofis_komisyonu: number
-  urunler:
-    | {
-        urun_adi: string
-      }
-    | { urun_adi: string }[]
-    | null
+  id: string;
+  urun_id: string;
+  acente_komisyonu: number;
+  rehber_komisyonu: number;
+  kaptan_komisyonu: number;
+  ofis_komisyonu: number;
+  urunler: {
+    urun_adi: string;
+  } | null;
 }
 
 interface SatisUrun {
-  urun_id: string
-  adet: string
-  birim_fiyat: string
-  bildirim_tipi: "magaza" | "rehber"
-  status: "onaylandı" | "beklemede" | "iptal"
-  acente_komisyonu: string
-  rehber_komisyonu: string
-  kaptan_komisyonu: string
-  ofis_komisyonu: string
-  showCommissions: boolean
-  satis_aciklamasi: string
+  urun_id: string;
+  adet: string;
+  birim_fiyat: string;
+  bildirim_tipi: "magaza" | "rehber";
+  status: "onaylandı" | "beklemede" | "iptal";
+  acente_komisyonu: string;
+  rehber_komisyonu: string;
+  kaptan_komisyonu: string;
+  ofis_komisyonu: string;
+  showCommissions: boolean;
+  satis_aciklamasi: string;
 }
 
 interface GroupedSatis {
-  date: string
-  firma: string
-  magaza: string
-  operator: string
-  tur: string
-  grup_pax: number
-  magaza_pax: number
-  rehber: string
-  satislar: SatisDetayViewRow[]
-  toplam_tutar: number
-  magaza_satislari: SatisDetayViewRow[]
-  rehber_satislari: SatisDetayViewRow[]
-  magaza_toplam: number
-  rehber_toplam: number
-  uyumlu: boolean
+  date: string;
+  firma: string;
+  magaza: string;
+  operator: string;
+  tur: string;
+  grup_pax: number;
+  magaza_pax: number;
+  rehber: string;
+  satislar: SatisDetayViewRow[];
+  toplam_tutar: number;
+  magaza_satislari: SatisDetayViewRow[];
+  rehber_satislari: SatisDetayViewRow[];
+  magaza_toplam: number;
+  rehber_toplam: number;
+  uyumlu: boolean;
 }
 
 interface Filters {
-  baslangic_tarihi: string
-  bitis_tarihi: string
-  firma_id: string
-  magaza_id: string
-  operator_id: string
-  rehber_id: string
-  bildirim_tipi: string
-  durum: string
-  tur_id: string
+  baslangic_tarihi: string;
+  bitis_tarihi: string;
+  firma_id: string;
+  magaza_id: string;
+  operator_id: string;
+  rehber_id: string;
+  bildirim_tipi: string;
+  durum: string;
+  tur_id: string;
 }
 
 interface SatisFormState {
-  satis_id?: string | null
-  operator_id: string
-  firma_id: string
-  grup_gelis_tarihi: string
-  satis_tarihi: string
-  grup_pax: string
-  magaza_pax: string
-  tur_id: string
-  rehber_id: string
-  magaza_id: string
+  satis_id?: string | null;
+  operator_id: string;
+  firma_id: string;
+  grup_gelis_tarihi: string;
+  satis_tarihi: string;
+  grup_pax: string;
+  magaza_pax: string;
+  tur_id: string;
+  rehber_id: string;
+  magaza_id: string;
 }
 
 const defaultSatisUrun: SatisUrun = {
@@ -192,7 +208,7 @@ const defaultSatisUrun: SatisUrun = {
   ofis_komisyonu: "",
   showCommissions: false,
   satis_aciklamasi: "",
-}
+};
 
 const defaultFormDataState: SatisFormState = {
   operator_id: "",
@@ -204,142 +220,77 @@ const defaultFormDataState: SatisFormState = {
   tur_id: "",
   rehber_id: "",
   magaza_id: "",
-}
+};
 
-const sendAdminNotification = async (action: string, userEmail: string, details: any) => {
+const sendAdminNotification = async (
+  action: string,
+  userEmail: string,
+  details: any
+) => {
   try {
-    const { data: adminUsers, error } = await supabase.from("profiles").select("id").eq("role", "admin")
+    const { data: adminUsers, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin");
 
     if (error) {
-      console.error("Admin kullanıcıları bulunamadı:", error)
-      return
+      console.error("Admin kullanıcıları bulunamadı:", error);
+      return;
     }
 
     const notifications = adminUsers?.map((admin) => ({
       user_id: admin.id,
       title: `Satış ${action}`,
-      message: `${userEmail} tarafından satış ${action} işlemi yapıldı. Detaylar: ${JSON.stringify(details)}`,
+      message: `${userEmail} tarafından satış ${action} işlemi yapıldı. Detaylar: ${JSON.stringify(
+        details
+      )}`,
       type: "sales_update",
       read: false,
       created_at: new Date().toISOString(),
-    }))
+    }));
 
     if (notifications && notifications.length > 0) {
-      const { error: notificationError } = await supabase.from("notifications").insert(notifications)
+      const { error: notificationError } = await supabase
+        .from("notifications")
+        .insert(notifications);
 
       if (notificationError) {
-        console.error("Bildirim gönderme hatası:", notificationError)
+        console.error("Bildirim gönderme hatası:", notificationError);
       } else {
-        console.log("Admin bildirimleri başarıyla gönderildi")
+        console.log("Admin bildirimleri başarıyla gönderildi");
       }
     }
   } catch (error) {
-    console.error("Bildirim sistemi hatası:", error)
+    console.error("Bildirim sistemi hatası:", error);
   }
-}
-
-interface SalesItem {
-  id: string
-  operator_adi?: string
-  firma_adi?: string
-  magaza_adi?: string
-  grup_gelis_tarihi?: string
-  magaza_giris_tarihi?: string
-  grup_pax?: number
-  magaza_pax?: number
-  tur_adi?: string
-  rehber_adi?: string
-  urun_adi?: string
-  adet?: number
-  birim_fiyat?: number
-  bildirim_tipi?: string
-  status?: string
-  satis_aciklamasi?: string
-  acente_komisyon_orani?: number
-  rehber_komisyon_orani?: number
-  kaptan_komisyon_orani?: number
-  ofis_komisyon_orani?: number
-  acente_komisyon_tutari?: number
-  rehber_komisyon_tutari?: number
-  kaptan_komisyon_tutari?: number
-  ofis_komisyon_tutari?: number
-  toplam_tutar?: number
-  magaza_toplam_tutar?: number
-}
-
-interface FormData {
-  operator_id: string
-  firma_id: string
-  magaza_id: string
-  grup_gelis_tarihi: string
-  magaza_giris_tarihi: string
-  grup_pax: number
-  magaza_pax: number
-  tur_id: string
-  rehber_id: string
-  satis_aciklamasi: string
-  products: ProductItem[]
-}
-
-interface ProductItem {
-  urun_id: string
-  adet: number
-  birim_fiyat: number
-  bildirim_tipi: string
-  status: string
-}
-
-interface Operator {
-  id: string
-  adi: string
-}
-
-interface Company {
-  id: string
-  adi: string
-}
-
-interface StoreType {
-  id: string
-  adi: string
-  firma_id: string
-}
-
-interface Tour {
-  id: string
-  adi: string
-}
-
-interface Guide {
-  id: string
-  adi: string
-}
-
-interface Product {
-  id: string
-  adi: string
-}
+};
 
 export default function SatislarPage() {
-  const { userRole, user } = useAuth()
-  const { t } = useI18n()
-  const [satislar, setSatislar] = useState<SatisDetayViewRow[]>([])
-  const [filteredSatislar, setFilteredSatislar] = useState<SatisDetayViewRow[]>([])
-  const [groupedSatislar, setGroupedSatislar] = useState<GroupedSatis[]>([])
-  const [operatorler, setOperatorler] = useState<Operator[]>([])
-  const [rehberler, setRehberler] = useState<Rehber[]>([])
-  const [magazalar, setMagazalar] = useState<Magaza[]>([])
-  const [allMagazalar, setAllMagazalar] = useState<Magaza[]>([])
-  const [firmalar, setFirmalar] = useState<Firma[]>([])
-  const [turlar, setTurlar] = useState<Tur[]>([])
-  const [urunler, setUrunler] = useState<Urun[]>([])
-  const [magazaUrunleri, setMagazaUrunleri] = useState<MagazaUrun[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editingSatis, setEditingSatis] = useState<Database["public"]["Tables"]["satislar"]["Row"] | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isOranlarDialogOpen, setIsOranlarDialogOpen] = useState(false)
-  const [selectedSatis, setSelectedSatis] = useState<SatisDetayViewRow | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
+  const { userRole, user } = useAuth();
+  const { t } = useI18n();
+  const [satislar, setSatislar] = useState<SatisDetayViewRow[]>([]);
+  const [filteredSatislar, setFilteredSatislar] = useState<SatisDetayViewRow[]>(
+    []
+  );
+  const [groupedSatislar, setGroupedSatislar] = useState<GroupedSatis[]>([]);
+  const [operatorler, setOperatorler] = useState<Operator[]>([]);
+  const [rehberler, setRehberler] = useState<Rehber[]>([]);
+  const [magazalar, setMagazalar] = useState<Magaza[]>([]);
+  const [allMagazalar, setAllMagazalar] = useState<Magaza[]>([]);
+  const [firmalar, setFirmalar] = useState<Firma[]>([]);
+  const [turlar, setTurlar] = useState<Tur[]>([]);
+  const [urunler, setUrunler] = useState<Urun[]>([]);
+  const [magazaUrunleri, setMagazaUrunleri] = useState<MagazaUrun[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingSatis, setEditingSatis] = useState<
+    Database["public"]["Tables"]["satislar"]["Row"] | null
+  >(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isOranlarDialogOpen, setIsOranlarDialogOpen] = useState(false);
+  const [selectedSatis, setSelectedSatis] = useState<SatisDetayViewRow | null>(
+    null
+  );
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     baslangic_tarihi: "",
     bitis_tarihi: "",
@@ -350,7 +301,7 @@ export default function SatislarPage() {
     bildirim_tipi: "all",
     durum: "all",
     tur_id: "all",
-  })
+  });
   const [formData, setFormData] = useState<SatisFormState>({
     operator_id: "",
     firma_id: "",
@@ -361,7 +312,7 @@ export default function SatislarPage() {
     tur_id: "",
     rehber_id: "",
     magaza_id: "",
-  })
+  });
   const [satisUrunleri, setSatisUrunleri] = useState<SatisUrun[]>([
     {
       urun_id: "",
@@ -376,93 +327,107 @@ export default function SatislarPage() {
       showCommissions: false,
       satis_aciklamasi: "",
     },
-  ])
-  const [message, setMessage] = useState("")
+  ]);
+  const [message, setMessage] = useState("");
 
-  const [isAddUrunDialogOpen, setIsAddUrunDialogOpen] = useState(false)
-  const [isAddMagazaDialogOpen, setIsAddMagazaDialogOpen] = useState(false)
-  const [isAddOperatorDialogOpen, setIsAddOperatorDialogOpen] = useState(false)
-  const [isAddTurDialogOpen, setIsAddTurDialogOpen] = useState(false)
-  const [isAddFirmaDialogOpen, setIsAddFirmaDialogOpen] = useState(false)
-  const [isAddRehberDialogOpen, setIsAddRehberDialogOpen] = useState(false)
+  const [isAddUrunDialogOpen, setIsAddUrunDialogOpen] = useState(false);
+  const [isAddMagazaDialogOpen, setIsAddMagazaDialogOpen] = useState(false);
+  const [isAddOperatorDialogOpen, setIsAddOperatorDialogOpen] = useState(false);
+  const [isAddTurDialogOpen, setIsAddTurDialogOpen] = useState(false);
+  const [isAddFirmaDialogOpen, setIsAddFirmaDialogOpen] = useState(false);
+  const [isAddRehberDialogOpen, setIsAddRehberDialogOpen] = useState(false);
 
-  const [isConfirmCloseDialogOpen, setIsConfirmCloseDialogOpen] = useState(false)
-  const [isFormSubmittedSuccessfully, setIsFormSubmittedSuccessfully] = useState(false)
+  const [isConfirmCloseDialogOpen, setIsConfirmCloseDialogOpen] =
+    useState(false);
+  const [isFormSubmittedSuccessfully, setIsFormSubmittedSuccessfully] =
+    useState(false);
 
-  const [initialFormData, setInitialFormData] = useState<SatisFormState | null>(null)
-  const [initialSatisUrunleri, setInitialSatisUrunleri] = useState<SatisUrun[] | null>(null)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [initialFormData, setInitialFormData] = useState<SatisFormState | null>(
+    null
+  );
+  const [initialSatisUrunleri, setInitialSatisUrunleri] = useState<
+    SatisUrun[] | null
+  >(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const canSeePrices = (bildirimTipi: "magaza" | "rehber") => {
-    if (userRole === "admin") return true
+    if (userRole === "admin") return true;
     if (userRole === "standart") {
-      return bildirimTipi === "rehber"
+      return bildirimTipi === "rehber";
     }
-    return false
-  }
+    return false;
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (formData.firma_id) {
-      fetchFirmaMagazalari(formData.firma_id)
+      fetchFirmaMagazalari(formData.firma_id);
     }
-  }, [formData.firma_id])
+  }, [formData.firma_id]);
 
   useEffect(() => {
     if (filters.firma_id && filters.firma_id !== "all") {
-      fetchFilterMagazalari(filters.firma_id)
+      fetchFilterMagazalari(filters.firma_id);
     } else {
-      setMagazalar([])
+      setMagazalar([]);
     }
-  }, [filters.firma_id])
+  }, [filters.firma_id]);
 
   useEffect(() => {
     if (formData.magaza_id) {
-      console.log("Mağaza seçildi, ürünler çekiliyor:", formData.magaza_id)
-      fetchMagazaUrunleri(formData.magaza_id)
+      console.log("Mağaza seçildi, ürünler çekiliyor:", formData.magaza_id);
+      fetchMagazaUrunleri(formData.magaza_id);
     } else {
-      console.log("Mağaza seçimi temizlendi")
-      setMagazaUrunleri([])
+      console.log("Mağaza seçimi temizlendi");
+      setMagazaUrunleri([]);
     }
-  }, [formData.magaza_id])
+  }, [formData.magaza_id]);
 
   useEffect(() => {
-    applyFilters()
-  }, [satislar, filters])
+    applyFilters();
+  }, [satislar, filters]);
 
   useEffect(() => {
-    groupSatislar()
-  }, [filteredSatislar])
+    groupSatislar();
+  }, [filteredSatislar]);
 
   useEffect(() => {
     if (!isDialogOpen || !initialFormData || !initialSatisUrunleri) {
-      setHasUnsavedChanges(false)
-      return
+      setHasUnsavedChanges(false);
+      return;
     }
 
-    const formChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData)
-    const satisUrunleriChanged = JSON.stringify(satisUrunleri) !== JSON.stringify(initialSatisUrunleri)
+    const formChanged =
+      JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    const satisUrunleriChanged =
+      JSON.stringify(satisUrunleri) !== JSON.stringify(initialSatisUrunleri);
 
-    setHasUnsavedChanges(formChanged || satisUrunleriChanged)
-  }, [formData, satisUrunleri, initialFormData, initialSatisUrunleri, isDialogOpen])
+    setHasUnsavedChanges(formChanged || satisUrunleriChanged);
+  }, [
+    formData,
+    satisUrunleri,
+    initialFormData,
+    initialSatisUrunleri,
+    isDialogOpen,
+  ]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
-        event.preventDefault()
-        event.returnValue = ""
+        event.preventDefault();
+        event.returnValue = "";
       }
-    }
+    };
 
-    window.addEventListener("beforeunload", handleBeforeUnload)
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-    }
-  }, [hasUnsavedChanges])
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
 
   const fetchData = async () => {
     try {
@@ -481,14 +446,14 @@ export default function SatislarPage() {
      rehber_id,
      magaza_id,
      created_at
-   `,
+   `
         )
         .order("magaza_giris_tarihi", { ascending: false })
-        .order("id", { ascending: false })
+        .order("id", { ascending: false });
 
-      if (satislarError) throw satislarError
+      if (satislarError) throw satislarError;
 
-      const enrichedSatislar: SatisDetayViewRow[] = []
+      const enrichedSatislar: SatisDetayViewRow[] = [];
 
       for (const satis of satislarData || []) {
         const { data: magazaKalemleri, error: magazaError } = await supabase
@@ -505,11 +470,11 @@ export default function SatislarPage() {
        status,
        satis_aciklamasi,
        urunler (urun_adi)
-     `,
+     `
           )
-          .eq("satis_id", satis.id)
+          .eq("satis_id", satis.id);
 
-        if (magazaError) throw magazaError
+        if (magazaError) throw magazaError;
 
         const { data: rehberKalemleri, error: rehberError } = await supabase
           .from("rehber_satis_kalemleri")
@@ -521,30 +486,57 @@ export default function SatislarPage() {
        status,
        satis_aciklamasi,
        urunler (urun_adi)
-     `,
+     `
           )
-          .eq("satis_id", satis.id)
+          .eq("satis_id", satis.id);
 
-        if (rehberError) throw rehberError
+        if (rehberError) throw rehberError;
 
-        const [operatorData, firmaData, magazaData, turData, rehberData] = await Promise.all([
-          satis.operator_id
-            ? supabase.from("operatorler").select("operator_adi").eq("id", satis.operator_id).single()
-            : { data: null },
-          satis.firma_id
-            ? supabase.from("firmalar").select("firma_adi").eq("id", satis.firma_id).single()
-            : { data: null },
-          satis.magaza_id
-            ? supabase.from("magazalar").select("magaza_adi").eq("id", satis.magaza_id).single()
-            : { data: null },
-          satis.tur_id ? supabase.from("turlar").select("tur_adi").eq("id", satis.tur_id).single() : { data: null },
-          satis.rehber_id
-            ? supabase.from("rehberler").select("rehber_adi").eq("id", satis.rehber_id).single()
-            : { data: null },
-        ])
+        const [operatorData, firmaData, magazaData, turData, rehberData] =
+          await Promise.all([
+            satis.operator_id
+              ? supabase
+                  .from("operatorler")
+                  .select("operator_adi")
+                  .eq("id", satis.operator_id)
+                  .single()
+              : { data: null },
+            satis.firma_id
+              ? supabase
+                  .from("firmalar")
+                  .select("firma_adi")
+                  .eq("id", satis.firma_id)
+                  .single()
+              : { data: null },
+            satis.magaza_id
+              ? supabase
+                  .from("magazalar")
+                  .select("magaza_adi")
+                  .eq("id", satis.magaza_id)
+                  .single()
+              : { data: null },
+            satis.tur_id
+              ? supabase
+                  .from("turlar")
+                  .select("tur_adi")
+                  .eq("id", satis.tur_id)
+                  .single()
+              : { data: null },
+            satis.rehber_id
+              ? supabase
+                  .from("rehberler")
+                  .select("rehber_adi")
+                  .eq("id", satis.rehber_id)
+                  .single()
+              : { data: null },
+          ]);
 
         for (const kalem of magazaKalemleri || []) {
-          const toplamTutar = (kalem.adet || 0) * (kalem.birim_fiyat || 0)
+          const toplamTutar = (kalem.adet || 0) * (kalem.birim_fiyat || 0);
+          const urunAdi = Array.isArray(kalem.urunler)
+            ? kalem.urunler[0]?.urun_adi
+            : kalem.urunler?.urun_adi;
+
           enrichedSatislar.push({
             satis_id: satis.id,
             satis_tarihi: satis.magaza_giris_tarihi,
@@ -559,7 +551,7 @@ export default function SatislarPage() {
             magaza_adi: magazaData.data?.magaza_adi || null,
             firma_adi: firmaData.data?.firma_adi || null,
             urun_id: kalem.urun_id,
-            urun_adi: kalem.urunler?.urun_adi || null,
+            urun_adi: urunAdi || null,
             adet: kalem.adet,
             birim_fiyat: kalem.birim_fiyat,
             acente_komisyonu: kalem.acente_komisyonu,
@@ -569,20 +561,28 @@ export default function SatislarPage() {
             toplam_tutar: toplamTutar,
             bildirim_tipi: "magaza" as const,
             status: kalem.status,
-            acente_komisyon_tutari: (toplamTutar * (kalem.acente_komisyonu || 0)) / 100,
-            rehber_komisyon_tutari: (toplamTutar * (kalem.rehber_komisyonu || 0)) / 100,
-            kaptan_komisyon_tutari: (toplamTutar * (kalem.kaptan_komisyonu || 0)) / 100,
-            ofis_komisyon_tutari: (toplamTutar * (kalem.ofis_komisyonu || 0)) / 100,
+            acente_komisyon_tutari:
+              (toplamTutar * (kalem.acente_komisyonu || 0)) / 100,
+            rehber_komisyon_tutari:
+              (toplamTutar * (kalem.rehber_komisyonu || 0)) / 100,
+            kaptan_komisyon_tutari:
+              (toplamTutar * (kalem.kaptan_komisyonu || 0)) / 100,
+            ofis_komisyon_tutari:
+              (toplamTutar * (kalem.ofis_komisyonu || 0)) / 100,
             rehber_teyyit_edildi: false,
             rehber_teyyit_birim_fiyat: null,
             rehber_teyyit_adet: null,
             rehber_teyyit_toplam_tutar: null,
             satis_aciklamasi: kalem.satis_aciklamasi,
-          })
+          });
         }
 
         for (const kalem of rehberKalemleri || []) {
-          const toplamTutar = (kalem.adet || 0) * (kalem.birim_fiyat || 0)
+          const toplamTutar = (kalem.adet || 0) * (kalem.birim_fiyat || 0);
+          const urunAdi = Array.isArray(kalem.urunler)
+            ? kalem.urunler[0]?.urun_adi
+            : kalem.urunler?.urun_adi;
+
           enrichedSatislar.push({
             satis_id: satis.id,
             satis_tarihi: satis.magaza_giris_tarihi,
@@ -597,7 +597,7 @@ export default function SatislarPage() {
             magaza_adi: magazaData.data?.magaza_adi || null,
             firma_adi: firmaData.data?.firma_adi || null,
             urun_id: kalem.urun_id,
-            urun_adi: kalem.urunler?.urun_adi || null,
+            urun_adi: urunAdi || null,
             adet: kalem.adet,
             birim_fiyat: kalem.birim_fiyat,
             acente_komisyonu: null,
@@ -616,63 +616,66 @@ export default function SatislarPage() {
             rehber_teyyit_adet: null,
             rehber_teyyit_toplam_tutar: null,
             satis_aciklamasi: kalem.satis_aciklamasi,
-          })
+          });
         }
       }
 
-      setSatislar(enrichedSatislar)
+      setSatislar(enrichedSatislar);
 
       const { data: operatorData, error: operatorError } = await supabase
         .from("operatorler")
         .select("id, operator_adi")
-        .order("operator_adi")
+        .order("operator_adi");
 
-      if (operatorError) throw operatorError
+      if (operatorError) throw operatorError;
 
       const { data: rehberData, error: rehberError } = await supabase
         .from("rehberler")
         .select("id, rehber_adi")
-        .order("rehber_adi")
+        .order("rehber_adi");
 
-      if (rehberError) throw rehberError
+      if (rehberError) throw rehberError;
 
       const { data: firmaData, error: firmaError } = await supabase
         .from("firmalar")
         .select("id, firma_adi")
-        .order("firma_adi")
+        .order("firma_adi");
 
-      if (firmaError) throw firmaError
+      if (firmaError) throw firmaError;
 
       const { data: allMagazaData, error: allMagazaError } = await supabase
         .from("magazalar")
         .select("id, magaza_adi, firma_id")
-        .order("magaza_adi")
+        .order("magaza_adi");
 
-      if (allMagazaError) throw allMagazaError
+      if (allMagazaError) throw allMagazaError;
 
-      const { data: turData, error: turError } = await supabase.from("turlar").select("id, tur_adi").order("tur_adi")
+      const { data: turData, error: turError } = await supabase
+        .from("turlar")
+        .select("id, tur_adi")
+        .order("tur_adi");
 
-      if (turError) throw turError
+      if (turError) throw turError;
 
       const { data: urunData, error: urunError } = await supabase
         .from("urunler")
         .select("id, urun_adi")
-        .order("urun_adi")
+        .order("urun_adi");
 
-      if (urunError) throw urunError
+      if (urunError) throw urunError;
 
-      setOperatorler(operatorData || [])
-      setRehberler(rehberData || [])
-      setFirmalar(firmaData || [])
-      setAllMagazalar(allMagazaData || [])
-      setTurlar(turData || [])
-      setUrunler(urunData || [])
+      setOperatorler(operatorData || []);
+      setRehberler(rehberData || []);
+      setFirmalar(firmaData || []);
+      setAllMagazalar(allMagazaData || []);
+      setTurlar(turData || []);
+      setUrunler(urunData || []);
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error("Error fetching data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const fetchFirmaMagazalari = async (firmaId: string) => {
     try {
@@ -680,15 +683,15 @@ export default function SatislarPage() {
         .from("magazalar")
         .select("id, magaza_adi, firma_id")
         .eq("firma_id", firmaId)
-        .order("magaza_adi")
+        .order("magaza_adi");
 
-      if (error) throw error
-      setMagazalar(data || [])
+      if (error) throw error;
+      setMagazalar(data || []);
     } catch (error) {
-      console.error("Error fetching firma magazalari:", error)
-      setMagazalar([])
+      console.error("Error fetching firma magazalari:", error);
+      setMagazalar([]);
     }
-  }
+  };
 
   const fetchFilterMagazalari = async (firmaId: string) => {
     try {
@@ -696,19 +699,19 @@ export default function SatislarPage() {
         .from("magazalar")
         .select("id, magaza_adi, firma_id")
         .eq("firma_id", firmaId)
-        .order("magaza_adi")
+        .order("magaza_adi");
 
-      if (error) throw error
-      setMagazalar(data || [])
+      if (error) throw error;
+      setMagazalar(data || []);
     } catch (error) {
-      console.error("Error fetching filter magazalari:", error)
-      setMagazalar([])
+      console.error("Error fetching filter magazalari:", error);
+      setMagazalar([]);
     }
-  }
+  };
 
   const fetchMagazaUrunleri = async (magazaId: string) => {
     try {
-      console.log("Mağaza ürünleri çekiliyor:", magazaId)
+      console.log("Mağaza ürünleri çekiliyor:", magazaId);
       const { data, error } = await supabase
         .from("magaza_urunler")
         .select(
@@ -722,86 +725,114 @@ ofis_komisyonu,
 urunler (
 urun_adi
 )
-`,
+`
         )
         .eq("magaza_id", magazaId)
         .eq("aktif", true)
-        .order("id")
+        .order("id");
 
-      if (error) throw error
+      if (error) throw error;
 
-      console.log("Çekilen mağaza ürünleri:", data)
+      console.log("Çekilen mağaza ürünleri:", data);
 
       const typedData: MagazaUrun[] = (data || []).map((item: any) => ({
         ...item,
         urunler: item.urunler || null,
-      }))
-      setMagazaUrunleri(typedData)
-      console.log("State'e set edilen mağaza ürünleri:", typedData)
+      }));
+      setMagazaUrunleri(typedData);
+      console.log("State'e set edilen mağaza ürünleri:", typedData);
     } catch (error) {
-      console.error("Error fetching magaza urunleri:", error)
-      setMagazaUrunleri([])
+      console.error("Error fetching magaza urunleri:", error);
+      setMagazaUrunleri([]);
     }
-  }
+  };
 
   const applyFilters = () => {
-    let filtered = [...satislar]
+    let filtered = [...satislar];
 
     if (filters.baslangic_tarihi) {
-      filtered = filtered.filter((satis) => satis.satis_tarihi && satis.satis_tarihi >= filters.baslangic_tarihi)
+      filtered = filtered.filter(
+        (satis) =>
+          satis.satis_tarihi && satis.satis_tarihi >= filters.baslangic_tarihi
+      );
     }
 
     if (filters.bitis_tarihi) {
-      filtered = filtered.filter((satis) => satis.satis_tarihi && satis.satis_tarihi <= filters.bitis_tarihi)
+      filtered = filtered.filter(
+        (satis) =>
+          satis.satis_tarihi && satis.satis_tarihi <= filters.bitis_tarihi
+      );
     }
 
     if (filters.firma_id && filters.firma_id !== "all") {
-      const selectedFirma = firmalar.find((f) => f.id.toString() === filters.firma_id)
+      const selectedFirma = firmalar.find(
+        (f) => f.id.toString() === filters.firma_id
+      );
       if (selectedFirma) {
-        filtered = filtered.filter((satis) => satis.firma_adi === selectedFirma.firma_adi)
+        filtered = filtered.filter(
+          (satis) => satis.firma_adi === selectedFirma.firma_adi
+        );
       }
     }
 
     if (filters.magaza_id && filters.magaza_id !== "all") {
-      const selectedMagaza = allMagazalar.find((m) => m.id.toString() === filters.magaza_id)
+      const selectedMagaza = allMagazalar.find(
+        (m) => m.id.toString() === filters.magaza_id
+      );
       if (selectedMagaza) {
-        filtered = filtered.filter((satis) => satis.magaza_adi === selectedMagaza.magaza_adi)
+        filtered = filtered.filter(
+          (satis) => satis.magaza_adi === selectedMagaza.magaza_adi
+        );
       }
     }
 
     if (filters.operator_id && filters.operator_id !== "all") {
-      const selectedOperator = operatorler.find((o) => o.id.toString() === filters.operator_id)
+      const selectedOperator = operatorler.find(
+        (o) => o.id.toString() === filters.operator_id
+      );
       if (selectedOperator) {
-        filtered = filtered.filter((satis) => satis.operator_adi === selectedOperator.operator_adi)
+        filtered = filtered.filter(
+          (satis) => satis.operator_adi === selectedOperator.operator_adi
+        );
       }
     }
 
     if (filters.rehber_id && filters.rehber_id !== "all") {
-      const selectedRehber = rehberler.find((r) => r.id.toString() === filters.rehber_id)
+      const selectedRehber = rehberler.find(
+        (r) => r.id.toString() === filters.rehber_id
+      );
       if (selectedRehber) {
-        filtered = filtered.filter((satis) => satis.rehber_adi === selectedRehber.rehber_adi)
+        filtered = filtered.filter(
+          (satis) => satis.rehber_adi === selectedRehber.rehber_adi
+        );
       }
     }
 
     if (filters.bildirim_tipi && filters.bildirim_tipi !== "all") {
-      filtered = filtered.filter((satis) => satis.bildirim_tipi === filters.bildirim_tipi)
+      filtered = filtered.filter(
+        (satis) => satis.bildirim_tipi === filters.bildirim_tipi
+      );
     }
 
     if (filters.tur_id && filters.tur_id !== "all") {
-      const selectedTur = turlar.find((t) => t.id.toString() === filters.tur_id)
+      const selectedTur = turlar.find(
+        (t) => t.id.toString() === filters.tur_id
+      );
       if (selectedTur) {
-        filtered = filtered.filter((satis) => satis.tur === selectedTur.tur_adi)
+        filtered = filtered.filter(
+          (satis) => satis.tur === selectedTur.tur_adi
+        );
       }
     }
 
-    setFilteredSatislar(filtered)
-  }
+    setFilteredSatislar(filtered);
+  };
 
   const groupSatislar = () => {
-    const grouped: { [key: string]: GroupedSatis } = {}
+    const grouped: { [key: string]: GroupedSatis } = {};
 
     filteredSatislar.forEach((satis) => {
-      const key = `${satis.satis_id}`
+      const key = `${satis.satis_id}`;
 
       if (!grouped[key]) {
         grouped[key] = {
@@ -820,54 +851,66 @@ urun_adi
           magaza_toplam: 0,
           rehber_toplam: 0,
           uyumlu: true,
-        }
+        };
       }
 
-      grouped[key].satislar.push(satis)
+      grouped[key].satislar.push(satis);
 
-      const itemToplamTutar = satis.status !== "iptal" ? Number(satis.toplam_tutar) || 0 : 0
+      const itemToplamTutar =
+        satis.status !== "iptal" ? Number(satis.toplam_tutar) || 0 : 0;
 
       if (satis.bildirim_tipi === "magaza") {
-        grouped[key].magaza_satislari.push(satis)
-        grouped[key].magaza_toplam += itemToplamTutar
+        grouped[key].magaza_satislari.push(satis);
+        grouped[key].magaza_toplam += itemToplamTutar;
       } else if (satis.bildirim_tipi === "rehber") {
-        grouped[key].rehber_satislari.push(satis)
-        grouped[key].rehber_toplam += itemToplamTutar
+        grouped[key].rehber_satislari.push(satis);
+        grouped[key].rehber_toplam += itemToplamTutar;
       }
-    })
+    });
 
     Object.values(grouped).forEach((group) => {
-      const tolerans = 0.01
-      group.uyumlu = Math.abs(group.magaza_toplam - group.rehber_toplam) <= tolerans
-      group.toplam_tutar = group.magaza_toplam
-    })
+      const tolerans = 0.01;
+      group.uyumlu =
+        Math.abs(group.magaza_toplam - group.rehber_toplam) <= tolerans;
+      group.toplam_tutar = group.magaza_toplam;
+    });
 
-    let finalGroups = Object.values(grouped)
+    let finalGroups = Object.values(grouped);
     if (filters.durum && filters.durum !== "all") {
       if (filters.durum === "uyumlu") {
-        finalGroups = finalGroups.filter((group) => group.uyumlu && group.magaza_toplam > 0 && group.rehber_toplam > 0)
+        finalGroups = finalGroups.filter(
+          (group) =>
+            group.uyumlu && group.magaza_toplam > 0 && group.rehber_toplam > 0
+        );
       } else if (filters.durum === "uyumsuz") {
-        finalGroups = finalGroups.filter((group) => !group.uyumlu && group.magaza_toplam > 0 && group.rehber_toplam > 0)
+        finalGroups = finalGroups.filter(
+          (group) =>
+            !group.uyumlu && group.magaza_toplam > 0 && group.rehber_toplam > 0
+        );
       } else if (filters.durum === "rehber_yok") {
-        finalGroups = finalGroups.filter((group) => group.magaza_toplam > 0 && group.rehber_toplam === 0)
+        finalGroups = finalGroups.filter(
+          (group) => group.magaza_toplam > 0 && group.rehber_toplam === 0
+        );
       } else if (filters.durum === "magaza_yok") {
-        finalGroups = finalGroups.filter((group) => group.magaza_toplam === 0 && group.rehber_toplam > 0)
+        finalGroups = finalGroups.filter(
+          (group) => group.magaza_toplam === 0 && group.rehber_toplam > 0
+        );
       }
     }
 
-    setGroupedSatislar(finalGroups)
-  }
+    setGroupedSatislar(finalGroups);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setMessage("")
+    e.preventDefault();
+    setMessage("");
 
     try {
-      let currentSatisId: string | null = null
-      const isUpdate = !!formData.satis_id
+      let currentSatisId: string | null = null;
+      const isUpdate = !!formData.satis_id;
 
       if (formData.satis_id) {
-        currentSatisId = formData.satis_id
+        currentSatisId = formData.satis_id;
         const { error: updateSatisError } = await supabase
           .from("satislar")
           .update({
@@ -875,27 +918,31 @@ urun_adi
             firma_id: formData.firma_id || null,
             grup_gelis_tarihi: formData.grup_gelis_tarihi || null,
             magaza_giris_tarihi: formData.satis_tarihi || null,
-            grup_pax: formData.grup_pax ? Number.parseInt(formData.grup_pax) : 0,
-            magaza_pax: formData.magaza_pax ? Number.parseInt(formData.magaza_pax) : 0,
+            grup_pax: formData.grup_pax
+              ? Number.parseInt(formData.grup_pax)
+              : 0,
+            magaza_pax: formData.magaza_pax
+              ? Number.parseInt(formData.magaza_pax)
+              : 0,
             tur_id: formData.tur_id || null,
             rehber_id: formData.rehber_id || null,
             magaza_id: formData.magaza_id || null,
           })
-          .eq("id", currentSatisId)
+          .eq("id", currentSatisId);
 
-        if (updateSatisError) throw updateSatisError
+        if (updateSatisError) throw updateSatisError;
 
         const { error: deleteMagazaItemsError } = await supabase
           .from("magaza_satis_kalemleri")
           .delete()
-          .eq("satis_id", currentSatisId)
-        if (deleteMagazaItemsError) throw deleteMagazaItemsError
+          .eq("satis_id", currentSatisId);
+        if (deleteMagazaItemsError) throw deleteMagazaItemsError;
 
         const { error: deleteRehberItemsError } = await supabase
           .from("rehber_satis_kalemleri")
           .delete()
-          .eq("satis_id", currentSatisId)
-        if (deleteRehberItemsError) throw deleteRehberItemsError
+          .eq("satis_id", currentSatisId);
+        if (deleteRehberItemsError) throw deleteRehberItemsError;
       } else {
         const { data: newSatis, error: insertSatisError } = await supabase
           .from("satislar")
@@ -904,28 +951,39 @@ urun_adi
             firma_id: formData.firma_id || null,
             grup_gelis_tarihi: formData.grup_gelis_tarihi || null,
             magaza_giris_tarihi: formData.satis_tarihi || null,
-            grup_pax: formData.grup_pax ? Number.parseInt(formData.grup_pax) : 0,
-            magaza_pax: formData.magaza_pax ? Number.parseInt(formData.magaza_pax) : 0,
+            grup_pax: formData.grup_pax
+              ? Number.parseInt(formData.grup_pax)
+              : 0,
+            magaza_pax: formData.magaza_pax
+              ? Number.parseInt(formData.magaza_pax)
+              : 0,
             tur_id: formData.tur_id || null,
             rehber_id: formData.rehber_id || null,
             magaza_id: formData.magaza_id || null,
           })
           .select("id")
-          .single()
+          .single();
 
-        if (insertSatisError) throw insertSatisError
-        currentSatisId = newSatis.id
+        if (insertSatisError) throw insertSatisError;
+        currentSatisId = newSatis.id;
       }
 
       const validUrunler = satisUrunleri.filter(
-        (su) => su.urun_id && su.adet && (canSeePrices(su.bildirim_tipi) ? su.birim_fiyat : true),
-      )
+        (su) =>
+          su.urun_id &&
+          su.adet &&
+          (canSeePrices(su.bildirim_tipi) ? su.birim_fiyat : true)
+      );
 
       for (const satisUrun of validUrunler) {
-        const selectedMagazaUrun = magazaUrunleri.find((mu) => mu.urun_id === satisUrun.urun_id)
+        const selectedMagazaUrun = magazaUrunleri.find(
+          (mu) => mu.urun_id === satisUrun.urun_id
+        );
 
-        const canEditPrice = canSeePrices(satisUrun.bildirim_tipi)
-        const birimFiyat = canEditPrice ? Number.parseFloat(satisUrun.birim_fiyat) : 0
+        const canEditPrice = canSeePrices(satisUrun.bildirim_tipi);
+        const birimFiyat = canEditPrice
+          ? Number.parseFloat(satisUrun.birim_fiyat)
+          : 0;
 
         if (satisUrun.bildirim_tipi === "magaza") {
           const itemToSave = {
@@ -951,157 +1009,185 @@ urun_adi
                 : selectedMagazaUrun?.ofis_komisyonu || 0,
             status: satisUrun.status,
             satis_aciklamasi: satisUrun.satis_aciklamasi || null,
-          }
-          const { error } = await supabase.from("magaza_satis_kalemleri").insert(itemToSave)
-          if (error) throw error
+          };
+          const { error } = await supabase
+            .from("magaza_satis_kalemleri")
+            .insert(itemToSave);
+          if (error) throw error;
         } else {
-          const { error } = await supabase.from("rehber_satis_kalemleri").insert({
-            satis_id: currentSatisId,
-            urun_id: satisUrun.urun_id,
-            adet: Number.parseInt(satisUrun.adet),
-            birim_fiyat: birimFiyat,
-            status: satisUrun.status,
-            satis_aciklamasi: satisUrun.satis_aciklamasi || null,
-          })
-          if (error) throw error
+          const { error } = await supabase
+            .from("rehber_satis_kalemleri")
+            .insert({
+              satis_id: currentSatisId,
+              urun_id: satisUrun.urun_id,
+              adet: Number.parseInt(satisUrun.adet),
+              birim_fiyat: birimFiyat,
+              status: satisUrun.status,
+              satis_aciklamasi: satisUrun.satis_aciklamasi || null,
+            });
+          if (error) throw error;
         }
       }
 
-      if (userRole === "rehber" || userRole === "standart") {
-        const actionType = isUpdate ? "güncellendi" : "eklendi"
+      if (userRole === "standart") {
+        const actionType = isUpdate ? "güncellendi" : "eklendi";
         const notificationDetails = {
           satisId: currentSatisId,
           firma: firmalar.find((f) => f.id === formData.firma_id)?.firma_adi,
-          magaza: magazalar.find((m) => m.id === formData.magaza_id)?.magaza_adi,
+          magaza: magazalar.find((m) => m.id === formData.magaza_id)
+            ?.magaza_adi,
           urunSayisi: validUrunler.length,
           bildirimTipi: validUrunler[0]?.bildirim_tipi,
           tarih: formData.satis_tarihi,
-        }
+        };
 
-        await sendAdminNotification(actionType, user?.email || "Bilinmeyen kullanıcı", notificationDetails)
+        await sendAdminNotification(
+          actionType,
+          user?.email || "Bilinmeyen kullanıcı",
+          notificationDetails
+        );
       }
 
       toast({
         title: t("common.success"),
-        description: t("sales.saveSuccess", {
-          action: formData.satis_id ? t("common.updated") : t("common.added"),
-          count: validUrunler.length,
-        }),
-      })
-      setIsFormSubmittedSuccessfully(true)
-      setIsDialogOpen(false)
-      fetchData()
-      setTimeout(() => setMessage(""), 3000)
+        description: `Satış başarıyla ${
+          formData.satis_id ? "güncellendi" : "eklendi"
+        }. ${validUrunler.length} ürün kaydedildi.`,
+      });
+      setIsFormSubmittedSuccessfully(true);
+      setIsDialogOpen(false);
+      fetchData();
+      setTimeout(() => setMessage(""), 3000);
     } catch (error: any) {
-      console.error("Error saving satis:", JSON.stringify(error, null, 2))
-      const errorMessage = error.message || error.details || error.hint || "Bilinmeyen bir hata oluştu."
+      console.error("Error saving satis:", JSON.stringify(error, null, 2));
+      const errorMessage =
+        error.message ||
+        error.details ||
+        error.hint ||
+        "Bilinmeyen bir hata oluştu.";
       toast({
         title: t("common.error"),
-        description: t("sales.saveError", { error: errorMessage }),
+        description: `Satış kaydedilirken hata oluştu: ${errorMessage}`,
         variant: "destructive",
-      })
-      setIsFormSubmittedSuccessfully(false)
+      });
+      setIsFormSubmittedSuccessfully(false);
     }
-  }
+  };
 
   const resetForm = () => {
-    const initialBildirimTipi = (userRole === "standart" ? "rehber" : "magaza") as "magaza" | "rehber"
-    const resetSatisUrunleri = [{ ...defaultSatisUrun, bildirim_tipi: initialBildirimTipi }]
+    const initialBildirimTipi = (
+      userRole === "standart" ? "rehber" : "magaza"
+    ) as "magaza" | "rehber";
+    const resetSatisUrunleri = [
+      { ...defaultSatisUrun, bildirim_tipi: initialBildirimTipi },
+    ];
 
-    setFormData(defaultFormDataState)
-    setSatisUrunleri(resetSatisUrunleri)
-    setInitialFormData(defaultFormDataState)
-    setInitialSatisUrunleri(resetSatisUrunleri)
-    setHasUnsavedChanges(false)
-  }
+    setFormData(defaultFormDataState);
+    setSatisUrunleri(resetSatisUrunleri);
+    setInitialFormData(defaultFormDataState);
+    setInitialSatisUrunleri(resetSatisUrunleri);
+    setHasUnsavedChanges(false);
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("sales.deleteConfirm"))) return
+    if (!confirm(t("sales.deleteConfirm"))) return;
 
     try {
       const { error: deleteMagazaItemsError } = await supabase
         .from("magaza_satis_kalemleri")
         .delete()
-        .eq("satis_id", id)
-      if (deleteMagazaItemsError) throw deleteMagazaItemsError
+        .eq("satis_id", id);
+      if (deleteMagazaItemsError) throw deleteMagazaItemsError;
 
       const { error: deleteRehberItemsError } = await supabase
         .from("rehber_satis_kalemleri")
         .delete()
-        .eq("satis_id", id)
-      if (deleteRehberItemsError) throw deleteRehberItemsError
+        .eq("satis_id", id);
+      if (deleteRehberItemsError) throw deleteRehberItemsError;
 
-      const { error } = await supabase.from("satislar").delete().eq("id", id)
-      if (error) throw error
+      const { error } = await supabase.from("satislar").delete().eq("id", id);
+      if (error) throw error;
 
-      if (userRole === "rehber" || userRole === "standart") {
-        await sendAdminNotification("silindi", user?.email || "Bilinmeyen kullanıcı", { satisId: id })
+      if (userRole === "standart") {
+        await sendAdminNotification(
+          "silindi",
+          user?.email || "Bilinmeyen kullanıcı",
+          { satisId: id }
+        );
       }
 
       toast({
         title: t("common.success"),
         description: t("sales.deleteSuccess"),
-      })
-      fetchData()
-      setTimeout(() => setMessage(""), 3000)
+      });
+      fetchData();
+      setTimeout(() => setMessage(""), 3000);
     } catch (error: any) {
-      console.error("Error deleting satis:", error)
-      const errorMessage = error.message || error.details || error.hint || "Bilinmeyen bir hata oluştu."
+      console.error("Error deleting satis:", error);
+      const errorMessage =
+        error.message ||
+        error.details ||
+        error.hint ||
+        "Bilinmeyen bir hata oluştu.";
       toast({
         title: t("common.error"),
-        description: t("sales.deleteError", { error: errorMessage }),
+        description: `Satış silinirken hata oluştu: ${errorMessage}`,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleAdd = () => {
-    const initialBildirimTipi = (userRole === "standart" ? "rehber" : "magaza") as "magaza" | "rehber"
-    const newSatisUrunleri = [{ ...defaultSatisUrun, bildirim_tipi: initialBildirimTipi }]
+    const initialBildirimTipi = (
+      userRole === "standart" ? "rehber" : "magaza"
+    ) as "magaza" | "rehber";
+    const newSatisUrunleri = [
+      { ...defaultSatisUrun, bildirim_tipi: initialBildirimTipi },
+    ];
 
-    setEditingSatis(null)
-    setFormData(defaultFormDataState)
-    setSatisUrunleri(newSatisUrunleri)
-    setInitialFormData(defaultFormDataState)
-    setInitialSatisUrunleri(newSatisUrunleri)
-    setIsFormSubmittedSuccessfully(false)
-    setHasUnsavedChanges(false)
-    setIsDialogOpen(true)
-  }
+    setEditingSatis(null);
+    setFormData(defaultFormDataState);
+    setSatisUrunleri(newSatisUrunleri);
+    setInitialFormData(defaultFormDataState);
+    setInitialSatisUrunleri(newSatisUrunleri);
+    setIsFormSubmittedSuccessfully(false);
+    setHasUnsavedChanges(false);
+    setIsDialogOpen(true);
+  };
 
   const handleEdit = async (satisDetay: SatisDetayViewRow) => {
-    setLoading(true)
+    setLoading(true);
     try {
       const { data: originalSatis, error: satisError } = await supabase
         .from("satislar")
         .select("*")
         .eq("id", satisDetay.satis_id)
-        .single()
+        .single();
 
-      if (satisError) throw satisError
+      if (satisError) throw satisError;
       if (!originalSatis) {
         toast({
           title: t("common.error"),
           description: t("sales.originalSalesDataNotFound"),
           variant: "destructive",
-        })
-        setLoading(false)
-        return
+        });
+        setLoading(false);
+        return;
       }
 
       const { data: magazaItems, error: magagaItemsError } = await supabase
         .from("magaza_satis_kalemleri")
         .select(
-          "urun_id, adet, birim_fiyat, acente_komisyonu, rehber_komisyonu, kaptan_komisyonu, ofis_komisyonu, status, satis_aciklamasi",
+          "urun_id, adet, birim_fiyat, acente_komisyonu, rehber_komisyonu, kaptan_komisyonu, ofis_komisyonu, status, satis_aciklamasi"
         )
-        .eq("satis_id", satisDetay.satis_id)
-      if (magagaItemsError) throw magagaItemsError
+        .eq("satis_id", satisDetay.satis_id);
+      if (magagaItemsError) throw magagaItemsError;
 
       const { data: rehberItems, error: rehberItemsError } = await supabase
         .from("rehber_satis_kalemleri")
         .select("urun_id, adet, birim_fiyat, status, satis_aciklamasi")
-        .eq("satis_id", satisDetay.satis_id)
-      if (rehberItemsError) throw rehberItemsError
+        .eq("satis_id", satisDetay.satis_id);
+      if (rehberItemsError) throw rehberItemsError;
 
       const combinedItems: SatisUrun[] = [
         ...(magazaItems || []).map((item) => ({
@@ -1130,7 +1216,7 @@ urun_adi
           showCommissions: false,
           satis_aciklamasi: item.satis_aciklamasi || "",
         })),
-      ]
+      ];
 
       const currentFormData: SatisFormState = {
         satis_id: originalSatis.id,
@@ -1143,7 +1229,7 @@ urun_adi
         tur_id: originalSatis.tur_id?.toString() || "",
         rehber_id: originalSatis.rehber_id?.toString() || "",
         magaza_id: originalSatis.magaza_id?.toString() || "",
-      }
+      };
 
       const currentSatisUrunleri: SatisUrun[] =
         combinedItems.length > 0
@@ -1153,41 +1239,45 @@ urun_adi
                 ...defaultSatisUrun,
                 bildirim_tipi: userRole === "standart" ? "rehber" : "magaza",
               },
-            ]
+            ];
 
-      setEditingSatis(originalSatis)
-      setFormData(currentFormData)
-      setSatisUrunleri(currentSatisUrunleri)
+      setEditingSatis(originalSatis);
+      setFormData(currentFormData);
+      setSatisUrunleri(currentSatisUrunleri);
 
-      setInitialFormData(currentFormData)
-      setInitialSatisUrunleri(currentSatisUrunleri)
-      setIsFormSubmittedSuccessfully(false)
-      setHasUnsavedChanges(false)
+      setInitialFormData(currentFormData);
+      setInitialSatisUrunleri(currentSatisUrunleri);
+      setIsFormSubmittedSuccessfully(false);
+      setHasUnsavedChanges(false);
 
       if (originalSatis.magaza_id) {
-        await fetchMagazaUrunleri(originalSatis.magaza_id.toString())
+        await fetchMagazaUrunleri(originalSatis.magaza_id.toString());
       } else {
-        setMagazaUrunleri([])
+        setMagazaUrunleri([]);
       }
 
-      setIsDialogOpen(true)
+      setIsDialogOpen(true);
     } catch (error: any) {
-      console.error("Error handling edit:", error)
-      const errorMessage = error.message || error.details || error.hint || "Bilinmeyen bir hata oluştu."
+      console.error("Error handling edit:", error);
+      const errorMessage =
+        error.message ||
+        error.details ||
+        error.hint ||
+        "Bilinmeyen bir hata oluştu.";
       toast({
         title: t("common.error"),
-        description: t("sales.editError", { error: errorMessage }),
+        description: `Düzenleme sırasında hata oluştu: ${errorMessage}`,
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const showOranlar = (satis: SatisDetayViewRow) => {
-    setSelectedSatis(satis)
-    setIsOranlarDialogOpen(true)
-  }
+    setSelectedSatis(satis);
+    setIsOranlarDialogOpen(true);
+  };
 
   const clearFilters = () => {
     setFilters({
@@ -1200,8 +1290,8 @@ urun_adi
       bildirim_tipi: "all",
       durum: "all",
       tur_id: "all",
-    })
-  }
+    });
+  };
 
   const addUrunRow = () => {
     setSatisUrunleri([
@@ -1219,22 +1309,26 @@ urun_adi
         showCommissions: false,
         satis_aciklamasi: "",
       },
-    ])
-  }
+    ]);
+  };
 
   const removeUrunRow = (index: number) => {
     if (satisUrunleri.length > 1) {
-      setSatisUrunleri(satisUrunleri.filter((_, i) => i !== index))
+      setSatisUrunleri(satisUrunleri.filter((_, i) => i !== index));
     }
-  }
+  };
 
-  const updateUrunRow = (index: number, field: keyof SatisUrun, value: string | boolean) => {
+  const updateUrunRow = (
+    index: number,
+    field: keyof SatisUrun,
+    value: string | boolean
+  ) => {
     setSatisUrunleri((prev) => {
-      const updated = [...prev]
-      updated[index] = { ...updated[index], [field]: value }
-      return updated
-    })
-  }
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
 
   const getDurumBadge = (group: GroupedSatis) => {
     if (group.magaza_toplam > 0 && group.rehber_toplam > 0) {
@@ -1244,14 +1338,14 @@ urun_adi
             <CheckCircle className="w-3 h-3 mr-1" />
             {t("sales.amountsMatch")}
           </Badge>
-        )
+        );
       } else {
         return (
           <Badge variant="destructive">
             <AlertTriangle className="w-3 h-3 mr-1" />
             {t("sales.amountMismatch")}
           </Badge>
-        )
+        );
       }
     } else if (group.magaza_toplam > 0 && group.rehber_toplam === 0) {
       return (
@@ -1259,116 +1353,118 @@ urun_adi
           <Store className="w-3 h-3 mr-1" />
           {t("sales.waitingGuideConfirmation")}
         </Badge>
-      )
+      );
     } else if (group.magaza_toplam === 0 && group.rehber_toplam > 0) {
       return (
         <Badge variant="secondary">
           <Phone className="w-3 h-3 mr-1" />
           {t("sales.onlyGuideNotification")}
         </Badge>
-      )
+      );
     }
-    return null
-  }
+    return null;
+  };
 
   const handleUrunAdded = (newUrunId: string) => {
     if (formData.magaza_id) {
-      fetchMagazaUrunleri(formData.magaza_id)
+      fetchMagazaUrunleri(formData.magaza_id);
     }
     setTimeout(() => {
       setSatisUrunleri((prev) => {
-        const updated = [...prev]
+        const updated = [...prev];
         if (updated.length > 0) {
-          updated[0].urun_id = newUrunId
+          updated[0].urun_id = newUrunId;
         }
-        return updated
-      })
-    }, 500)
-  }
+        return updated;
+      });
+    }, 500);
+  };
 
   const handleMagazaAdded = (newMagazaId: string) => {
-    fetchData()
-    setFormData((prev) => ({ ...prev, magaza_id: newMagazaId }))
-  }
+    fetchData();
+    setFormData((prev) => ({ ...prev, magaza_id: newMagazaId }));
+  };
 
   const handleOperatorAdded = (newOperatorId: string) => {
-    fetchData()
-    setFormData((prev) => ({ ...prev, operator_id: newOperatorId }))
-  }
+    fetchData();
+    setFormData((prev) => ({ ...prev, operator_id: newOperatorId }));
+  };
 
   const handleTurAdded = (newTurId: string) => {
-    fetchData()
-    setFormData((prev) => ({ ...prev, tur_id: newTurId }))
-  }
+    fetchData();
+    setFormData((prev) => ({ ...prev, tur_id: newTurId }));
+  };
 
   const handleFirmaAdded = (newFirmaId: string) => {
-    fetchData()
-    setFormData((prev) => ({ ...prev, firma_id: newFirmaId }))
-  }
+    fetchData();
+    setFormData((prev) => ({ ...prev, firma_id: newFirmaId }));
+  };
 
   const handleRehberAdded = (newRehberId: string) => {
-    fetchData()
-    setFormData((prev) => ({ ...prev, rehber_id: newRehberId }))
-  }
+    fetchData();
+    setFormData((prev) => ({ ...prev, rehber_id: newRehberId }));
+  };
 
   const handleUrunSelection = (index: number, urunId: string) => {
-    console.log("Ürün seçildi:", urunId)
-    console.log("Index:", index)
-    console.log("Mevcut satış ürünleri state:", satisUrunleri[index])
-    console.log("Mevcut mağaza ürünleri:", magazaUrunleri)
+    console.log("Ürün seçildi:", urunId);
+    console.log("Index:", index);
+    console.log("Mevcut satış ürünleri state:", satisUrunleri[index]);
+    console.log("Mevcut mağaza ürünleri:", magazaUrunleri);
 
-    const updated = [...satisUrunleri]
-    updated[index] = { ...updated[index], urun_id: urunId }
-    setSatisUrunleri(updated)
+    const updated = [...satisUrunleri];
+    updated[index] = { ...updated[index], urun_id: urunId };
+    setSatisUrunleri(updated);
 
-    const selectedMagazaUrun = magazaUrunleri.find((mu) => mu.urun_id === urunId)
-    console.log("Bulunan mağaza ürünü:", selectedMagazaUrun)
+    const selectedMagazaUrun = magazaUrunleri.find(
+      (mu) => mu.urun_id === urunId
+    );
+    console.log("Bulunan mağaza ürünü:", selectedMagazaUrun);
 
     if (selectedMagazaUrun && userRole === "admin") {
       setTimeout(() => {
         setSatisUrunleri((prev) => {
-          const newUpdated = [...prev]
+          const newUpdated = [...prev];
           newUpdated[index] = {
             ...newUpdated[index],
             acente_komisyonu: selectedMagazaUrun.acente_komisyonu.toString(),
             rehber_komisyonu: selectedMagazaUrun.rehber_komisyonu.toString(),
             kaptan_komisyonu: selectedMagazaUrun.kaptan_komisyonu.toString(),
             ofis_komisyonu: selectedMagazaUrun.ofis_komisyonu.toString(),
-          }
-          return newUpdated
-        })
-      }, 0)
+          };
+          return newUpdated;
+        });
+      }, 0);
     }
-  }
+  };
 
   const handleMainDialogClose = (open: boolean) => {
     if (!open) {
       if (!isFormSubmittedSuccessfully && hasUnsavedChanges) {
-        setIsConfirmCloseDialogOpen(true)
+        setIsConfirmCloseDialogOpen(true);
       } else {
-        setIsDialogOpen(false)
-        resetForm()
-        setEditingSatis(null)
-        setIsFormSubmittedSuccessfully(false)
-        setHasUnsavedChanges(false)
+        setIsDialogOpen(false);
+        resetForm();
+        setEditingSatis(null);
+        setIsFormSubmittedSuccessfully(false);
+        setHasUnsavedChanges(false);
       }
     } else {
-      setIsDialogOpen(open)
-      setIsFormSubmittedSuccessfully(false)
+      setIsDialogOpen(open);
+      setIsFormSubmittedSuccessfully(false);
     }
-  }
+  };
 
   const confirmDiscardChanges = () => {
-    setIsConfirmCloseDialogOpen(false)
-    setIsDialogOpen(false)
-    resetForm()
-    setEditingSatis(null)
-    setIsFormSubmittedSuccessfully(false)
-  }
+    setIsConfirmCloseDialogOpen(false);
+    setIsDialogOpen(false);
+    resetForm();
+    setEditingSatis(null);
+    setIsFormSubmittedSuccessfully(false);
+  };
 
   const cancelDiscardChanges = () => {
-    setIsConfirmCloseDialogOpen(false)
-  }
+    setIsConfirmCloseDialogOpen(false);
+  };
 
   if (userRole !== "admin" && userRole !== "standart") {
     return (
@@ -1377,25 +1473,35 @@ urun_adi
           <AlertDescription>{t("sales.noAccess")}</AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   if (loading) {
-    return <div>{t("sales.loading")}</div>
+    return <div>{t("sales.loading")}</div>;
   }
 
   return (
     <div>
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t("sales.title")}</h1>
-          <p className="text-sm sm:text-base text-gray-600">{t("sales.subtitle")}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {t("sales.title")}
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            {t("sales.subtitle")}
+          </p>
           {userRole === "standart" && (
-            <p className="text-xs sm:text-sm text-orange-600 mt-1">{t("sales.standardUserNote")}</p>
+            <p className="text-xs sm:text-sm text-orange-600 mt-1">
+              {t("sales.standardUserNote")}
+            </p>
           )}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="w-full sm:w-auto"
+          >
             <Filter className="w-4 h-4 mr-2" />
             {t("sales.filter")}
           </Button>
@@ -1425,7 +1531,9 @@ urun_adi
                 <Input
                   type="date"
                   value={filters.baslangic_tarihi}
-                  onChange={(e) => setFilters({ ...filters, baslangic_tarihi: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, baslangic_tarihi: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -1433,7 +1541,9 @@ urun_adi
                 <Input
                   type="date"
                   value={filters.bitis_tarihi}
-                  onChange={(e) => setFilters({ ...filters, bitis_tarihi: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, bitis_tarihi: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -1452,7 +1562,9 @@ urun_adi
                     <SelectValue placeholder={t("sales.allCompanies")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("sales.allCompanies")}</SelectItem>
+                    <SelectItem value="all">
+                      {t("sales.allCompanies")}
+                    </SelectItem>
                     {firmalar.map((firma) => (
                       <SelectItem key={firma.id} value={firma.id}>
                         {firma.firma_adi}
@@ -1465,7 +1577,9 @@ urun_adi
                 <Label>{t("sales.store")}</Label>
                 <Select
                   value={filters.magaza_id}
-                  onValueChange={(value) => setFilters({ ...filters, magaza_id: value })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, magaza_id: value })
+                  }
                   disabled={!filters.firma_id || magazalar.length === 0}
                 >
                   <SelectTrigger>
@@ -1485,13 +1599,17 @@ urun_adi
                 <Label>{t("sales.operator")}</Label>
                 <Select
                   value={filters.operator_id}
-                  onValueChange={(value) => setFilters({ ...filters, operator_id: value })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, operator_id: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t("sales.allOperators")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("sales.allOperators")}</SelectItem>
+                    <SelectItem value="all">
+                      {t("sales.allOperators")}
+                    </SelectItem>
                     {operatorler.map((operator) => (
                       <SelectItem key={operator.id} value={operator.id}>
                         {operator.operator_adi}
@@ -1504,7 +1622,9 @@ urun_adi
                 <Label>{t("sales.guide")}</Label>
                 <Select
                   value={filters.rehber_id}
-                  onValueChange={(value) => setFilters({ ...filters, rehber_id: value })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, rehber_id: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t("sales.allGuides")} />
@@ -1523,7 +1643,12 @@ urun_adi
               </div>
               <div>
                 <Label>{t("sales.tour")}</Label>
-                <Select value={filters.tur_id} onValueChange={(value) => setFilters({ ...filters, tur_id: value })}>
+                <Select
+                  value={filters.tur_id}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, tur_id: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("sales.allTours")} />
                   </SelectTrigger>
@@ -1544,15 +1669,23 @@ urun_adi
                   <Label>{t("sales.notificationType")}</Label>
                   <Select
                     value={filters.bildirim_tipi}
-                    onValueChange={(value) => setFilters({ ...filters, bildirim_tipi: value })}
+                    onValueChange={(value) =>
+                      setFilters({ ...filters, bildirim_tipi: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t("sales.allNotifications")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">{t("sales.allNotifications")}</SelectItem>
-                      <SelectItem value="magaza">{t("sales.storeNotification")}</SelectItem>
-                      <SelectItem value="rehber">{t("sales.guideNotification")}</SelectItem>
+                      <SelectItem value="all">
+                        {t("sales.allNotifications")}
+                      </SelectItem>
+                      <SelectItem value="magaza">
+                        {t("sales.storeNotification")}
+                      </SelectItem>
+                      <SelectItem value="rehber">
+                        {t("sales.guideNotification")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1560,16 +1693,31 @@ urun_adi
 
               <div>
                 <Label>{t("sales.status")}</Label>
-                <Select value={filters.durum} onValueChange={(value) => setFilters({ ...filters, durum: value })}>
+                <Select
+                  value={filters.durum}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, durum: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("sales.allStatuses")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("sales.allStatuses")}</SelectItem>
-                    <SelectItem value="uyumlu">{t("sales.compatible")}</SelectItem>
-                    <SelectItem value="uyumsuz">{t("sales.incompatible")}</SelectItem>
-                    <SelectItem value="rehber_yok">{t("sales.noGuideNotification")}</SelectItem>
-                    <SelectItem value="magaza_yok">{t("sales.noStoreNotification")}</SelectItem>
+                    <SelectItem value="all">
+                      {t("sales.allStatuses")}
+                    </SelectItem>
+                    <SelectItem value="uyumlu">
+                      {t("sales.compatible")}
+                    </SelectItem>
+                    <SelectItem value="uyumsuz">
+                      {t("sales.incompatible")}
+                    </SelectItem>
+                    <SelectItem value="rehber_yok">
+                      {t("sales.noGuideNotification")}
+                    </SelectItem>
+                    <SelectItem value="magaza_yok">
+                      {t("sales.noStoreNotification")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1587,7 +1735,8 @@ urun_adi
       <Card>
         <CardHeader>
           <CardTitle>
-            {t("sales.salesList")} ({groupedSatislar.length} {t("sales.visits")})
+            {t("sales.salesList")} ({groupedSatislar.length} {t("sales.visits")}
+            )
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1600,7 +1749,9 @@ urun_adi
                       <div className="flex flex-wrap items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         <span className="font-semibold text-sm sm:text-base">
-                          {group.date ? new Date(group.date).toLocaleDateString("tr-TR") : "-"}
+                          {group.date
+                            ? new Date(group.date).toLocaleDateString("tr-TR")
+                            : "-"}
                         </span>
                         <Badge variant="outline" className="text-xs">
                           {group.tur}
@@ -1608,7 +1759,8 @@ urun_adi
                         {userRole === "admin" && getDurumBadge(group)}
                       </div>
                       <div className="text-xs sm:text-sm text-gray-600">
-                        <span className="font-medium">{group.firma}</span> - {group.magaza}
+                        <span className="font-medium">{group.firma}</span> -{" "}
+                        {group.magaza}
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2">
                         <span>
@@ -1627,11 +1779,16 @@ urun_adi
                     </div>
                     {userRole === "admin" && (
                       <div className="text-right space-y-1 lg:min-w-[150px]">
-                        <div className="text-lg font-bold text-green-600">€{group.magaza_toplam.toFixed(2)}</div>
-                        <div className="text-xs sm:text-sm text-gray-500">{t("sales.storeTotal")}</div>
+                        <div className="text-lg font-bold text-green-600">
+                          €{group.magaza_toplam.toFixed(2)}
+                        </div>
+                        <div className="text-xs sm:text-sm text-gray-500">
+                          {t("sales.storeTotal")}
+                        </div>
                         {group.magaza_toplam > 0 || group.rehber_toplam > 0 ? (
                           <div className="text-xs text-gray-400">
-                            M: €{group.magaza_toplam.toFixed(2)} | R: €{group.rehber_toplam.toFixed(2)}
+                            M: €{group.magaza_toplam.toFixed(2)} | R: €
+                            {group.rehber_toplam.toFixed(2)}
                           </div>
                         ) : null}
                       </div>
@@ -1645,53 +1802,90 @@ urun_adi
                         <TableRow>
                           {/* Ürün sütunu - standart kullanıcılar için mağaza satışlarında gizli */}
                           {userRole === "admin" && (
-                            <TableHead className="min-w-[120px]">{t("sales.product")}</TableHead>
+                            <TableHead className="min-w-[120px]">
+                              {t("sales.product")}
+                            </TableHead>
                           )}
                           {userRole === "standart" && (
-                            <TableHead className="min-w-[120px]">{t("sales.product")}</TableHead>
+                            <TableHead className="min-w-[120px]">
+                              {t("sales.product")}
+                            </TableHead>
                           )}
 
-                          {(userRole === "admin" || userRole === "standart") && (
-                            <TableHead className="min-w-[100px]">{t("sales.notificationType")}</TableHead>
+                          {(userRole === "admin" ||
+                            userRole === "standart") && (
+                            <TableHead className="min-w-[100px]">
+                              {t("sales.notificationType")}
+                            </TableHead>
                           )}
 
                           {/* Adet sütunu - standart kullanıcılar için mağaza satışlarında gizli */}
                           {userRole === "admin" && (
-                            <TableHead className="min-w-[60px]">{t("sales.quantity")}</TableHead>
+                            <TableHead className="min-w-[60px]">
+                              {t("sales.quantity")}
+                            </TableHead>
                           )}
                           {userRole === "standart" && (
-                            <TableHead className="min-w-[60px]">{t("sales.quantity")}</TableHead>
+                            <TableHead className="min-w-[60px]">
+                              {t("sales.quantity")}
+                            </TableHead>
                           )}
 
-                          {(userRole === "admin" || userRole === "standart") && (
-                            <TableHead className="min-w-[100px]">{t("sales.unitPrice")}</TableHead>
+                          {(userRole === "admin" ||
+                            userRole === "standart") && (
+                            <TableHead className="min-w-[100px]">
+                              {t("sales.unitPrice")}
+                            </TableHead>
                           )}
-                          {(userRole === "admin" || userRole === "standart") && (
-                            <TableHead className="min-w-[100px]">{t("sales.totalAmount")}</TableHead>
+                          {(userRole === "admin" ||
+                            userRole === "standart") && (
+                            <TableHead className="min-w-[100px]">
+                              {t("sales.totalAmount")}
+                            </TableHead>
                           )}
 
                           {/* Durum sütunu - standart kullanıcılar için mağaza satışlarında gizli */}
-                          {userRole === "admin" && <TableHead className="min-w-[100px]">{t("sales.status")}</TableHead>}
+                          {userRole === "admin" && (
+                            <TableHead className="min-w-[100px]">
+                              {t("sales.status")}
+                            </TableHead>
+                          )}
                           {userRole === "standart" && (
-                            <TableHead className="min-w-[100px]">{t("sales.status")}</TableHead>
+                            <TableHead className="min-w-[100px]">
+                              {t("sales.status")}
+                            </TableHead>
                           )}
 
-                          <TableHead className="min-w-[200px]">{t("common.actions")}</TableHead>
+                          <TableHead className="min-w-[200px]">
+                            {t("common.actions")}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {/* Mağaza Satışları */}
                         {group.magaza_satislari.map((satis, itemIndex) => (
-                          <TableRow key={`magaza-${satis.satis_id}-${itemIndex}`}>
+                          <TableRow
+                            key={`magaza-${satis.satis_id}-${itemIndex}`}
+                          >
                             {/* Ürün adı - standart kullanıcılar için mağaza satışlarında gizli */}
                             {userRole === "admin" && (
-                              <TableCell className="font-medium">{satis.urun_adi || "-"}</TableCell>
+                              <TableCell className="font-medium">
+                                {satis.urun_adi || "-"}
+                              </TableCell>
                             )}
-                            {userRole === "standart" && <TableCell className="font-medium">****</TableCell>}
+                            {userRole === "standart" && (
+                              <TableCell className="font-medium">
+                                ****
+                              </TableCell>
+                            )}
 
-                            {(userRole === "admin" || userRole === "standart") && (
+                            {(userRole === "admin" ||
+                              userRole === "standart") && (
                               <TableCell>
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-blue-50 text-blue-700 text-xs"
+                                >
                                   <Store className="w-3 h-3 mr-1" />
                                   {t("sales.storeNotification")}
                                 </Badge>
@@ -1699,19 +1893,31 @@ urun_adi
                             )}
 
                             {/* Adet - standart kullanıcılar için mağaza satışlarında gizli */}
-                            {userRole === "admin" && <TableCell>{satis.adet || 0}</TableCell>}
-                            {userRole === "standart" && <TableCell>****</TableCell>}
+                            {userRole === "admin" && (
+                              <TableCell>{satis.adet || 0}</TableCell>
+                            )}
+                            {userRole === "standart" && (
+                              <TableCell>****</TableCell>
+                            )}
 
-                            {userRole === "admin" && <TableCell>€{satis.birim_fiyat || 0}</TableCell>}
+                            {userRole === "admin" && (
+                              <TableCell>€{satis.birim_fiyat || 0}</TableCell>
+                            )}
                             {userRole === "standart" && (
                               <TableCell>
-                                {satis.bildirim_tipi === "magaza" ? "****" : `€${satis.birim_fiyat || 0}`}
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `€${satis.birim_fiyat || 0}`}
                               </TableCell>
                             )}
-                            {userRole === "admin" && <TableCell>€{satis.toplam_tutar || 0}</TableCell>}
+                            {userRole === "admin" && (
+                              <TableCell>€{satis.toplam_tutar || 0}</TableCell>
+                            )}
                             {userRole === "standart" && (
                               <TableCell>
-                                {satis.bildirim_tipi === "magaza" ? "****" : `€${satis.toplam_tutar || 0}`}
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `€${satis.toplam_tutar || 0}`}
                               </TableCell>
                             )}
 
@@ -1719,25 +1925,36 @@ urun_adi
                             {userRole === "admin" && (
                               <TableCell>
                                 {satis.status === "onaylandı" && (
-                                  <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                                  <Badge
+                                    variant="default"
+                                    className="bg-green-100 text-green-800 text-xs"
+                                  >
                                     {t("sales.approved")}
                                   </Badge>
                                 )}
                                 {satis.status === "beklemede" && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
                                     <Clock className="w-3 h-3 mr-1" />
                                     {t("sales.pending")}
                                   </Badge>
                                 )}
                                 {satis.status === "iptal" && (
-                                  <Badge variant="destructive" className="text-xs">
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-xs"
+                                  >
                                     {t("sales.cancelled")}
                                   </Badge>
                                 )}
                                 {!satis.status && "-"}
                               </TableCell>
                             )}
-                            {userRole === "standart" && <TableCell>****</TableCell>}
+                            {userRole === "standart" && (
+                              <TableCell>****</TableCell>
+                            )}
 
                             <TableCell>
                               <div className="flex flex-col sm:flex-row gap-2">
@@ -1750,7 +1967,8 @@ urun_adi
                                   <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                   {t("sales.edit")}
                                 </Button>
-                                {(userRole === "admin" || satis.bildirim_tipi === "rehber") && (
+                                {(userRole === "admin" ||
+                                  satis.bildirim_tipi === "rehber") && (
                                   <Button
                                     variant="destructive"
                                     size="sm"
@@ -1778,32 +1996,51 @@ urun_adi
                         ))}
                         {/* Rehber Satışları - Bu kısımda kısıtlama yok */}
                         {group.rehber_satislari.map((satis, itemIndex) => (
-                          <TableRow key={`rehber-${satis.satis_id}-${itemIndex}`}>
-                            <TableCell className="font-medium">{satis.urun_adi || "-"}</TableCell>
-                            {(userRole === "admin" || userRole === "standart") && (
+                          <TableRow
+                            key={`rehber-${satis.satis_id}-${itemIndex}`}
+                          >
+                            <TableCell className="font-medium">
+                              {satis.urun_adi || "-"}
+                            </TableCell>
+                            {(userRole === "admin" ||
+                              userRole === "standart") && (
                               <TableCell>
-                                <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-orange-50 text-orange-700 text-xs"
+                                >
                                   <Phone className="w-3 h-3 mr-1" />
                                   {t("sales.guideNotification")}
                                 </Badge>
                               </TableCell>
                             )}
                             <TableCell>{satis.adet || 0}</TableCell>
-                            {userRole === "admin" && <TableCell>€{satis.birim_fiyat || 0}</TableCell>}
+                            {userRole === "admin" && (
+                              <TableCell>€{satis.birim_fiyat || 0}</TableCell>
+                            )}
                             {userRole === "standart" && (
                               <TableCell>
-                                {satis.bildirim_tipi === "magaza" ? "****" : `€${satis.birim_fiyat || 0}`}
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `€${satis.birim_fiyat || 0}`}
                               </TableCell>
                             )}
-                            {userRole === "admin" && <TableCell>€{satis.toplam_tutar || 0}</TableCell>}
+                            {userRole === "admin" && (
+                              <TableCell>€{satis.toplam_tutar || 0}</TableCell>
+                            )}
                             {userRole === "standart" && (
                               <TableCell>
-                                {satis.bildirim_tipi === "magaza" ? "****" : `€${satis.toplam_tutar || 0}`}
+                                {satis.bildirim_tipi === "magaza"
+                                  ? "****"
+                                  : `€${satis.toplam_tutar || 0}`}
                               </TableCell>
                             )}
                             <TableCell>
                               {satis.status === "onaylandı" && (
-                                <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                                <Badge
+                                  variant="default"
+                                  className="bg-green-100 text-green-800 text-xs"
+                                >
                                   {t("sales.approved")}
                                 </Badge>
                               )}
@@ -1814,7 +2051,10 @@ urun_adi
                                 </Badge>
                               )}
                               {satis.status === "iptal" && (
-                                <Badge variant="destructive" className="text-xs">
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
                                   {t("sales.cancelled")}
                                 </Badge>
                               )}
@@ -1869,43 +2109,103 @@ urun_adi
       <Dialog open={isOranlarDialogOpen} onOpenChange={setIsOranlarDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">{t("sales.commissionRates")}</DialogTitle>
-            <DialogDescription className="text-sm">{t("sales.commissionRatesDescription")}</DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">
+              {t("sales.commissionRates")}
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              {t("sales.commissionRatesDescription")}
+            </DialogDescription>
           </DialogHeader>
           {selectedSatis && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <Label className="text-sm">{t("sales.agencyCommission")}</Label>
-                  <Input type="text" value={selectedSatis.acente_komisyonu || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.agencyCommission")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.acente_komisyonu || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.guideCommission")}</Label>
-                  <Input type="text" value={selectedSatis.rehber_komisyonu || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.guideCommission")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.rehber_komisyonu || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.captainCommission")}</Label>
-                  <Input type="text" value={selectedSatis.kaptan_komisyonu || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.captainCommission")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.kaptan_komisyonu || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.officeCommission")}</Label>
-                  <Input type="text" value={selectedSatis.ofis_komisyonu || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.officeCommission")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.ofis_komisyonu || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.agencyCommissionAmount")}</Label>
-                  <Input type="text" value={selectedSatis.acente_komisyon_tutari || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.agencyCommissionAmount")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.acente_komisyon_tutari || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.guideCommissionAmount")}</Label>
-                  <Input type="text" value={selectedSatis.rehber_komisyon_tutari || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.guideCommissionAmount")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.rehber_komisyon_tutari || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.captainCommissionAmount")}</Label>
-                  <Input type="text" value={selectedSatis.kaptan_komisyon_tutari || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.captainCommissionAmount")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.kaptan_komisyon_tutari || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
                 <div>
-                  <Label className="text-sm">{t("sales.officeCommissionAmount")}</Label>
-                  <Input type="text" value={selectedSatis.ofis_komisyon_tutari || "0"} disabled className="text-sm" />
+                  <Label className="text-sm">
+                    {t("sales.officeCommissionAmount")}
+                  </Label>
+                  <Input
+                    type="text"
+                    value={selectedSatis.ofis_komisyon_tutari || "0"}
+                    disabled
+                    className="text-sm"
+                  />
                 </div>
               </div>
             </div>
@@ -1920,7 +2220,9 @@ urun_adi
             <DialogTitle className="text-lg sm:text-xl">
               {editingSatis ? t("sales.editSale") : t("sales.addSale")}
             </DialogTitle>
-            <DialogDescription className="text-sm">{t("sales.addSaleDescription")}</DialogDescription>
+            <DialogDescription className="text-sm">
+              {t("sales.addSaleDescription")}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
@@ -1929,9 +2231,10 @@ urun_adi
                   <Label htmlFor="operator_id">{t("sales.operator")}</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      id="operator_id"
                       value={formData.operator_id}
-                      onValueChange={(value) => setFormData({ ...formData, operator_id: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, operator_id: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={t("sales.selectOperator")} />
@@ -1958,14 +2261,13 @@ urun_adi
                   <Label htmlFor="firma_id">{t("sales.company")}</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      id="firma_id"
                       value={formData.firma_id}
                       onValueChange={(value) => {
                         setFormData({
                           ...formData,
                           firma_id: value,
                           magaza_id: "",
-                        })
+                        });
                       }}
                     >
                       <SelectTrigger>
@@ -1979,7 +2281,12 @@ urun_adi
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button type="button" variant="secondary" size="icon" onClick={() => setIsAddFirmaDialogOpen(true)}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddFirmaDialogOpen(true)}
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1988,10 +2295,9 @@ urun_adi
                   <Label htmlFor="magaza_id">{t("sales.store")}</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      id="magaza_id"
                       value={formData.magaza_id}
                       onValueChange={(value) => {
-                        setFormData({ ...formData, magaza_id: value })
+                        setFormData({ ...formData, magaza_id: value });
                       }}
                       disabled={!formData.firma_id}
                     >
@@ -2018,10 +2324,11 @@ urun_adi
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="grup_gelis_tarihi">{t("sales.groupArrivalDate")}</Label>
+                  <Label htmlFor="grup_gelis_tarihi">
+                    {t("sales.groupArrivalDate")}
+                  </Label>
                   <Input
                     type="date"
-                    id="grup_gelis_tarihi"
                     value={formData.grup_gelis_tarihi}
                     onChange={(e) =>
                       setFormData({
@@ -2032,39 +2339,45 @@ urun_adi
                   />
                 </div>
                 <div>
-                  <Label htmlFor="satis_tarihi">{t("sales.storeEntryDate")}</Label>
+                  <Label htmlFor="satis_tarihi">
+                    {t("sales.storeEntryDate")}
+                  </Label>
                   <Input
                     type="date"
-                    id="satis_tarihi"
                     value={formData.satis_tarihi}
-                    onChange={(e) => setFormData({ ...formData, satis_tarihi: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, satis_tarihi: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="grup_pax">{t("sales.groupPax")}</Label>
                   <Input
                     type="number"
-                    id="grup_pax"
                     value={formData.grup_pax}
-                    onChange={(e) => setFormData({ ...formData, grup_pax: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, grup_pax: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="magaza_pax">{t("sales.storePax")}</Label>
                   <Input
                     type="number"
-                    id="magaza_pax"
                     value={formData.magaza_pax}
-                    onChange={(e) => setFormData({ ...formData, magaza_pax: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, magaza_pax: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="tur_id">{t("sales.tour")}</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      id="tur_id"
                       value={formData.tur_id}
-                      onValueChange={(value) => setFormData({ ...formData, tur_id: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, tur_id: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={t("sales.selectTour")} />
@@ -2077,7 +2390,12 @@ urun_adi
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button type="button" variant="secondary" size="icon" onClick={() => setIsAddTurDialogOpen(true)}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsAddTurDialogOpen(true)}
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -2086,9 +2404,10 @@ urun_adi
                   <Label htmlFor="rehber_id">{t("sales.guide")}</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      id="rehber_id"
                       value={formData.rehber_id}
-                      onValueChange={(value) => setFormData({ ...formData, rehber_id: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, rehber_id: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={t("sales.selectGuide")} />
@@ -2116,8 +2435,15 @@ urun_adi
               {/* Satış Ürünleri */}
               <div className="space-y-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <Label className="text-sm sm:text-base">{t("sales.salesProducts")}</Label>
-                  <Button type="button" variant="secondary" onClick={addUrunRow} className="w-full sm:w-auto text-sm">
+                  <Label className="text-sm sm:text-base">
+                    {t("sales.salesProducts")}
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={addUrunRow}
+                    className="w-full sm:w-auto text-sm"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     {t("sales.addProduct")}
                   </Button>
@@ -2127,29 +2453,47 @@ urun_adi
                     key={index}
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-center p-4 border rounded-lg"
                   >
-                    {/* Ürün seçimi */}
+                    {/* Ürün seçimi - Sadece mağaza ürünlerini göster */}
                     <div className="sm:col-span-2 lg:col-span-1">
                       <Label htmlFor={`urun_id_${index}`} className="text-sm">
                         {t("sales.product")}
                       </Label>
                       <div className="flex items-center space-x-2">
                         <Select
-                          id={`urun_id_${index}`}
                           value={urun.urun_id}
                           onValueChange={(value) => {
-                            updateUrunRow(index, "urun_id", value)
-                            handleUrunSelection(index, value)
+                            updateUrunRow(index, "urun_id", value);
+                            handleUrunSelection(index, value);
                           }}
+                          disabled={
+                            !formData.magaza_id || magazaUrunleri.length === 0
+                          }
                         >
                           <SelectTrigger className="text-sm">
-                            <SelectValue placeholder={t("sales.selectProduct")} />
+                            <SelectValue
+                              placeholder={
+                                !formData.magaza_id
+                                  ? t("sales.selectStoreFirst")
+                                  : magazaUrunleri.length === 0
+                                  ? t("sales.noProductsInStore")
+                                  : t("sales.selectProduct")
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            {urunler.map((urun) => (
-                              <SelectItem key={urun.id} value={urun.id} className="text-sm">
-                                {urun.urun_adi}
-                              </SelectItem>
-                            ))}
+                            {magazaUrunleri.map((magazaUrun) => {
+                              const urunAdi = magazaUrun.urunler?.urun_adi;
+
+                              return (
+                                <SelectItem
+                                  key={magazaUrun.urun_id}
+                                  value={magazaUrun.urun_id}
+                                  className="text-sm"
+                                >
+                                  {urunAdi || "Ürün adı bulunamadı"}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         <Button
@@ -2158,10 +2502,16 @@ urun_adi
                           size="icon"
                           onClick={() => setIsAddUrunDialogOpen(true)}
                           className="shrink-0"
+                          disabled={!formData.magaza_id}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
+                      {!formData.magaza_id && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {t("sales.selectStoreToSeeProducts")}
+                        </p>
+                      )}
                     </div>
 
                     {/* Adet */}
@@ -2171,24 +2521,31 @@ urun_adi
                       </Label>
                       <Input
                         type="number"
-                        id={`adet_${index}`}
                         value={urun.adet}
-                        onChange={(e) => updateUrunRow(index, "adet", e.target.value)}
+                        onChange={(e) =>
+                          updateUrunRow(index, "adet", e.target.value)
+                        }
                         className="text-sm"
                       />
                     </div>
 
                     {/* Birim Fiyat */}
-                    {(userRole === "admin" || (userRole === "standart" && urun.bildirim_tipi === "rehber")) && (
+                    {(userRole === "admin" ||
+                      (userRole === "standart" &&
+                        urun.bildirim_tipi === "rehber")) && (
                       <div>
-                        <Label htmlFor={`birim_fiyat_${index}`} className="text-sm">
+                        <Label
+                          htmlFor={`birim_fiyat_${index}`}
+                          className="text-sm"
+                        >
                           {t("sales.unitPrice")}
                         </Label>
                         <Input
                           type="number"
-                          id={`birim_fiyat_${index}`}
                           value={urun.birim_fiyat}
-                          onChange={(e) => updateUrunRow(index, "birim_fiyat", e.target.value)}
+                          onChange={(e) =>
+                            updateUrunRow(index, "birim_fiyat", e.target.value)
+                          }
                           className="text-sm"
                         />
                       </div>
@@ -2196,12 +2553,17 @@ urun_adi
 
                     {/* Bildirim Tipi */}
                     <div>
-                      <Label htmlFor={`bildirim_tipi_${index}`} className="text-sm">
+                      <Label
+                        htmlFor={`bildirim_tipi_${index}`}
+                        className="text-sm"
+                      >
                         {t("sales.notificationType")}
                       </Label>
                       <Select
                         value={urun.bildirim_tipi}
-                        onValueChange={(value) => updateUrunRow(index, "bildirim_tipi", value)}
+                        onValueChange={(value) =>
+                          updateUrunRow(index, "bildirim_tipi", value)
+                        }
                         disabled={userRole === "standart"}
                       >
                         <SelectTrigger className="text-sm">
@@ -2223,7 +2585,12 @@ urun_adi
                       <Label htmlFor={`status_${index}`} className="text-sm">
                         {t("sales.status")}
                       </Label>
-                      <Select value={urun.status} onValueChange={(value) => updateUrunRow(index, "status", value)}>
+                      <Select
+                        value={urun.status}
+                        onValueChange={(value) =>
+                          updateUrunRow(index, "status", value)
+                        }
+                      >
                         <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
@@ -2248,7 +2615,13 @@ urun_adi
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => updateUrunRow(index, "showCommissions", !urun.showCommissions)}
+                          onClick={() =>
+                            updateUrunRow(
+                              index,
+                              "showCommissions",
+                              !urun.showCommissions
+                            )
+                          }
                           className="w-full sm:w-auto text-xs"
                         >
                           {urun.showCommissions ? (
@@ -2272,72 +2645,114 @@ urun_adi
                     </div>
 
                     {/* Komisyon Oranları - Responsive grid */}
-                    {userRole === "admin" && urun.showCommissions && urun.bildirim_tipi === "magaza" && (
-                      <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2 p-3 bg-gray-50 rounded">
-                        <div>
-                          <Label htmlFor={`acente_komisyonu_${index}`} className="text-sm">
-                            {t("sales.agencyCommission")}
-                          </Label>
-                          <Input
-                            type="number"
-                            id={`acente_komisyonu_${index}`}
-                            value={urun.acente_komisyonu}
-                            onChange={(e) => updateUrunRow(index, "acente_komisyonu", e.target.value)}
-                            placeholder="0"
-                            className="text-sm"
-                          />
+                    {userRole === "admin" &&
+                      urun.showCommissions &&
+                      urun.bildirim_tipi === "magaza" && (
+                        <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2 p-3 bg-gray-50 rounded">
+                          <div>
+                            <Label
+                              htmlFor={`acente_komisyonu_${index}`}
+                              className="text-sm"
+                            >
+                              {t("sales.agencyCommission")}
+                            </Label>
+                            <Input
+                              type="number"
+                              value={urun.acente_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "acente_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor={`rehber_komisyonu_${index}`}
+                              className="text-sm"
+                            >
+                              {t("sales.guideCommission")}
+                            </Label>
+                            <Input
+                              type="number"
+                              value={urun.rehber_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "rehber_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor={`kaptan_komisyonu_${index}`}
+                              className="text-sm"
+                            >
+                              {t("sales.captainCommission")}
+                            </Label>
+                            <Input
+                              type="number"
+                              value={urun.kaptan_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "kaptan_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor={`ofis_komisyonu_${index}`}
+                              className="text-sm"
+                            >
+                              {t("sales.officeCommission")}
+                            </Label>
+                            <Input
+                              type="number"
+                              value={urun.ofis_komisyonu}
+                              onChange={(e) =>
+                                updateUrunRow(
+                                  index,
+                                  "ofis_komisyonu",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                              className="text-sm"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <Label htmlFor={`rehber_komisyonu_${index}`} className="text-sm">
-                            {t("sales.guideCommission")}
-                          </Label>
-                          <Input
-                            type="number"
-                            id={`rehber_komisyonu_${index}`}
-                            value={urun.rehber_komisyonu}
-                            onChange={(e) => updateUrunRow(index, "rehber_komisyonu", e.target.value)}
-                            placeholder="0"
-                            className="text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`kaptan_komisyonu_${index}`} className="text-sm">
-                            {t("sales.captainCommission")}
-                          </Label>
-                          <Input
-                            type="number"
-                            id={`kaptan_komisyonu_${index}`}
-                            value={urun.kaptan_komisyonu}
-                            onChange={(e) => updateUrunRow(index, "kaptan_komisyonu", e.target.value)}
-                            placeholder="0"
-                            className="text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`ofis_komisyonu_${index}`} className="text-sm">
-                            {t("sales.officeCommission")}
-                          </Label>
-                          <Input
-                            type="number"
-                            id={`ofis_komisyonu_${index}`}
-                            value={urun.ofis_komisyonu}
-                            onChange={(e) => updateUrunRow(index, "ofis_komisyonu", e.target.value)}
-                            placeholder="0"
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Açıklama alanı */}
                     <div className="col-span-full">
-                      <Label htmlFor={`satis_aciklamasi_${index}`} className="text-sm">
+                      <Label
+                        htmlFor={`satis_aciklamasi_${index}`}
+                        className="text-sm"
+                      >
                         {t("sales.salesDescription")}
                       </Label>
                       <Textarea
-                        id={`satis_aciklamasi_${index}`}
                         value={urun.satis_aciklamasi}
-                        onChange={(e) => updateUrunRow(index, "satis_aciklamasi", e.target.value)}
+                        onChange={(e) =>
+                          updateUrunRow(
+                            index,
+                            "satis_aciklamasi",
+                            e.target.value
+                          )
+                        }
                         placeholder={t("sales.salesDescriptionPlaceholder")}
                         rows={2}
                         className="text-sm"
@@ -2366,17 +2781,32 @@ urun_adi
       </Dialog>
 
       {/* Onay Diyalogu - Değişiklikleri atmak için */}
-      <Dialog open={isConfirmCloseDialogOpen} onOpenChange={setIsConfirmCloseDialogOpen}>
+      <Dialog
+        open={isConfirmCloseDialogOpen}
+        onOpenChange={setIsConfirmCloseDialogOpen}
+      >
         <DialogContent className="w-[95vw] max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg">{t("sales.unsavedChanges")}</DialogTitle>
-            <DialogDescription className="text-sm">{t("sales.unsavedChangesDescription")}</DialogDescription>
+            <DialogTitle className="text-lg">
+              {t("sales.unsavedChanges")}
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              {t("sales.unsavedChangesDescription")}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
-            <Button variant="outline" onClick={cancelDiscardChanges} className="w-full sm:w-auto bg-transparent">
+            <Button
+              variant="outline"
+              onClick={cancelDiscardChanges}
+              className="w-full sm:w-auto bg-transparent"
+            >
               {t("sales.cancel")}
             </Button>
-            <Button variant="destructive" onClick={confirmDiscardChanges} className="w-full sm:w-auto">
+            <Button
+              variant="destructive"
+              onClick={confirmDiscardChanges}
+              className="w-full sm:w-auto"
+            >
               {t("sales.discardChanges")}
             </Button>
           </div>
@@ -2384,7 +2814,12 @@ urun_adi
       </Dialog>
 
       {/* Add Dialog Components */}
-      <AddUrunDialog open={isAddUrunDialogOpen} onOpenChange={setIsAddUrunDialogOpen} onUrunAdded={handleUrunAdded} />
+      <AddUrunDialog
+        open={isAddUrunDialogOpen}
+        onOpenChange={setIsAddUrunDialogOpen}
+        onUrunAdded={handleUrunAdded}
+        selectedMagazaId={formData.magaza_id}
+      />
       <AddMagazaDialog
         open={isAddMagazaDialogOpen}
         onOpenChange={setIsAddMagazaDialogOpen}
@@ -2396,7 +2831,11 @@ urun_adi
         onOpenChange={setIsAddOperatorDialogOpen}
         onOperatorAdded={handleOperatorAdded}
       />
-      <AddTurDialog open={isAddTurDialogOpen} onOpenChange={setIsAddTurDialogOpen} onTurAdded={handleTurAdded} />
+      <AddTurDialog
+        open={isAddTurDialogOpen}
+        onOpenChange={setIsAddTurDialogOpen}
+        onTurAdded={handleTurAdded}
+      />
       <AddFirmaDialog
         open={isAddFirmaDialogOpen}
         onOpenChange={setIsAddFirmaDialogOpen}
@@ -2408,5 +2847,5 @@ urun_adi
         onRehberAdded={handleRehberAdded}
       />
     </div>
-  )
+  );
 }

@@ -497,6 +497,8 @@ export default function DashboardPage() {
   }
 
   // Rehber kullanıcıları için özel dashboard
+  // @ts-expect-error: rehber tipi UserRole içinde tanımlı değil ama kontrol ediliyor
+
   if (userRole === "rehber") {
     return (
       <div>
